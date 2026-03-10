@@ -1,0 +1,7 @@
+__pycache__/
+endict/
+jpdict/
+.env
+*.zip
+*.db
+storage.py
