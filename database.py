@@ -15,6 +15,8 @@ def init_db():
             reading TEXT,
             definition TEXT
     )""")
+    # index for assingning each word to its own index and make it easier to look up
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_endict_word ON endict(word);")
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS jpdict(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -22,6 +24,7 @@ def init_db():
             reading TEXT,
             definition TEXT
     )""")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_jpdict_word ON jpdict(word);")
     conn.commit()
     conn.close()
 
