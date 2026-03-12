@@ -42,11 +42,20 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
     return results
 
 nlp = spacy.load("ja_ginza")
+
 @app.post("/api/text")
 def text(text: dict) -> dict:
     naiyou = text.get("text")
-    valid_attr = ["NOUN", "VERB", "ADJ", "ADV", "NUM", "PROPN", "DET"]
-    word_list = [str(word) for word in nlp(naiyou) if word.pos_ in valid_attr]
+    valid_attr = ["NOUN", "VERB", "ADJ", "ADV", "NUM", "PROPN", "DET", "CCONJ"]
+    word_list = []
+    # still flawed but decent enough for now
+    for word in nlp(naiyou):    
+        if word.pos_ in valid_attr:
+            compound = str(word)
+            for child in word.children: # x.children gives you all tokens that point to the current token as their head.
+                if child.pos_ in ["AUX", "SCONJ"]:
+                    compound += str(child)
+            word_list.append(compound)
     return {"words" : word_list}
 
 @app.get("/api/kana")
