@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from database import init_db, get_db
 import fugashi
+import spacy
 import json
 
 app = FastAPI()
@@ -13,6 +14,7 @@ app.add_middleware(
     allow_headers=["*"]
 )
 init_db()
+tagger = fugashi.Tagger()
 
 with open("kana.json", "r", encoding="utf-8") as f:
     kana_list = json.loads(f.read())
@@ -38,15 +40,14 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
             "definition" : r["definition"]
         })
     return results
-    
+
+nlp = spacy.load("ja_ginza")
 @app.post("/api/text")
 def text(text: dict) -> dict:
-    counter = 0
     naiyou = text.get("text")
-    tagger = fugashi.Tagger() 
-    for word in tagger(naiyou):
-        counter += 1
-    return {"count" : counter}
+    valid_attr = ["NOUN", "VERB", "ADJ", "ADV", "NUM", "PROPN", "DET"]
+    word_list = [str(word) for word in nlp(naiyou) if word.pos_ in valid_attr]
+    return {"words" : word_list}
 
 @app.get("/api/kana")
 def kana(ji: str = "h") -> dict: 

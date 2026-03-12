@@ -35,7 +35,10 @@
         }
     }
 </script>
-
+<nav>
+    <a href="/">home</a>
+    <a href="/text">words</a>
+</nav>
 <h1>Testing</h1>
 <p>Homepage</p>
 <a href="/?ji=h">Hiragana</a>
