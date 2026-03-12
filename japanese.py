@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from database import init_db, get_db
+import fugashi
 import json
 
 app = FastAPI()
@@ -21,7 +22,7 @@ def home():
     return "testing"
 
 @app.get("/api/lookup")
-def lookup(word: str, dict: str = "en"):
+def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
     conn = get_db()
     cursor = conn.cursor()
     if dict == "jp":
@@ -38,6 +39,15 @@ def lookup(word: str, dict: str = "en"):
         })
     return results
     
+@app.post("/api/text")
+def text(text: dict) -> dict:
+    counter = 0
+    naiyou = text.get("text")
+    tagger = fugashi.Tagger() 
+    for word in tagger(naiyou):
+        counter += 1
+    return {"count" : counter}
+
 @app.get("/api/kana")
 def kana(ji: str = "h") -> dict: 
     return kana_list["katakana"] if ji == "k" else kana_list["hiragana"]
