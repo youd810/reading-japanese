@@ -17,7 +17,7 @@ for file in sorted(files, key=lambda x: int(x.split("_")[2].split(".")[0])): # s
     definition_list = []
     with open(os.path.join(folder, file), "r", encoding="utf-8") as f: #path.join() if the script is in different loc from the file it wants to open
         entries = json.loads(f.read()) #json.load() (or loads, whatever the difference is) to load json files, otherwise everything will turn into a string
-        for entry in entries:
+        for entry in entries:          # json.load() reads from a file object while json.loads() reads from a string
             if entry[1] == "":
                 continue
             word_list.append(entry[0])

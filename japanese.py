@@ -25,11 +25,9 @@ def home():
 def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
     conn = get_db()
     cursor = conn.cursor()
-    '''
-    so the way the query below works is that it will get all words from the db one by one 
-    and check if the pattern word+% match `?`
-    for example does the pattern 民主% match 民主主義？ (or vice versa) 
-    '''
+    # so the way the query below works is that it will get all words from the db one by one 
+    # and check if the pattern word+% match `?`
+    # for example does the pattern 民主% match 民主主義？ (or vice versa) 
     if dict == "jp":
         cursor.execute("SELECT * FROM jpdict WHERE ? LIKE word || '%' ORDER BY LENGTH(word) DESC", (word,)) 
     else:                                                                        
@@ -40,9 +38,9 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
         results.append({
             "word" : r["word"],
             "reading" : r["reading"],
-            "definition" : r["definition"]
-        })
-    return results
+            "definition" : json.loads(r["definition"]) # since it's a json string by default i need to parse it back as a python object
+        })                                             # well it's because i didn't set ensure_ascii to True when dumping them to the database   
+    return results                                     # which turned the letters into unicode bytes
 
 # imagine having to resort to using nlp lib just to make a word counter lmao
 nlp = spacy.load("ja_ginza")
