@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from database import init_db, get_db
-import fugashi
 import spacy
 import json
 
@@ -14,14 +13,13 @@ app.add_middleware(
     allow_headers=["*"]
 )
 init_db()
-tagger = fugashi.Tagger()
 
 with open("kana.json", "r", encoding="utf-8") as f:
     kana_list = json.loads(f.read())
 
 @app.get("/")
 def home():
-    return "testing"
+    return "hey buddy i think you got the wrong door. the leather club is two blocks down."
 
 @app.get("/api/lookup")
 def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
@@ -41,12 +39,13 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
         })
     return results
 
+# imagine having to resort to using nlp lib just to make a word counter lmao
 nlp = spacy.load("ja_ginza")
 
 @app.post("/api/text")
 def text(text: dict) -> dict:
     naiyou = text.get("text")
-    valid_attr = ["NOUN", "VERB", "ADJ", "ADV", "NUM", "PROPN", "DET", "CCONJ"]
+    valid_attr = ["NOUN", "VERB", "ADJ", "ADV", "NUM", "PROPN", "DET", "CCONJ", "ADP"]
     word_list = []
     # still flawed but decent enough for now
     for word in nlp(naiyou):    

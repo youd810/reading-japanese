@@ -22,5 +22,8 @@
 		"globals": "^17.3.0",
 		"svelte": "^5.51.0",
 		"vite": "^7.3.1"
+	},
+	"dependencies": {
+		"svelte-toggle-switch": "^2.3.1"
 	}
 }
