@@ -25,10 +25,15 @@ def home():
 def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
     conn = get_db()
     cursor = conn.cursor()
+    '''
+    so the way the query below works is that it will get all words from the db one by one 
+    and check if the pattern word+% match `?`
+    for example does the pattern 民主% match 民主主義？ (or vice versa) 
+    '''
     if dict == "jp":
-        cursor.execute("SELECT * FROM jpdict WHERE word = ?", (word,))
-    else:
-        cursor.execute("SELECT * FROM endict WHERE word = ?", (word,))
+        cursor.execute("SELECT * FROM jpdict WHERE ? LIKE word || '%' ORDER BY LENGTH(word) DESC", (word,)) 
+    else:                                                                        
+        cursor.execute("SELECT * FROM endict WHERE ? LIKE word || '%' ORDER BY LENGTH(word) DESC", (word,)) 
     result = cursor.fetchall()
     results = []
     for r in result:
@@ -45,7 +50,7 @@ nlp = spacy.load("ja_ginza")
 @app.post("/api/text")
 def text(text: dict) -> dict:
     naiyou = text.get("text")
-    valid_attr = ["NOUN", "VERB", "ADJ", "ADV", "NUM", "PROPN", "DET", "CCONJ", "ADP"]
+    valid_attr = ["NOUN", "VERB", "ADJ", "ADV", "NUM", "PROPN", "DET", "CCONJ", "ADP", "PRON", "INTJ"] # it's prob better if i just put exceptions instead
     word_list = []
     # still flawed but decent enough for now
     for word in nlp(naiyou):    
