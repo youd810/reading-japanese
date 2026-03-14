@@ -23,15 +23,21 @@ def home():
 
 @app.get("/api/lookup")
 def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
-    conn = get_db()
+    conn = get_db()                                 # also apparently lists, string, or anything as simple only requires queries instead of req body?
     cursor = conn.cursor()
     # so the way the query below works is that it will get all words from the db one by one 
     # and check if the pattern word+% match `?`
     # for example does the pattern 民主% match 民主主義？ (or vice versa) 
     if dict == "jp":
-        cursor.execute("SELECT * FROM jpdict WHERE ? LIKE word || '%' ORDER BY LENGTH(word) DESC", (word,)) 
+        cursor.execute("""
+            SELECT * FROM jpdict 
+            WHERE (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1) 
+            ORDER BY LENGTH(word) DESC""", (word, word)) 
     else:                                                                        
-        cursor.execute("SELECT * FROM endict WHERE ? LIKE word || '%' ORDER BY LENGTH(word) DESC", (word,)) 
+        cursor.execute("""
+            SELECT * FROM endict 
+            WHERE (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1) 
+            ORDER BY LENGTH(word) DESC""", (word, word)) 
     result = cursor.fetchall()
     results = []
     for r in result:
