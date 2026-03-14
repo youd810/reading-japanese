@@ -5,7 +5,7 @@
 
     let naiyou = $state("")         // debounce simplified ver: 
     let timer                       // user calls on input > cancel the previous timer > 
-    function sendText() {           // start a new one (x ms) under the same var id (timer) >
+    function sendText() {           // start a new one (x ms) under the same var (timer) but different id  >
         clearTimeout(timer)         // repeat until the timer runs out > once the timer runs out, run the request.
         timer = setTimeout(async () => {    // moved async to here
             try {
@@ -95,10 +95,7 @@
     }
     
 </script>
-<nav>
-    <a href="/">home</a>
-    <a href="/text">words</a>
-</nav>
+
 <br>
 <textarea bind:value={naiyou} oninput={sendText} style="font-size: 16px;"></textarea>
 <p>Word count estimation: {wordcount}</p>

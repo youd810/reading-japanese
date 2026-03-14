@@ -8,4 +8,11 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
+<nav>
+    <a href="/">home</a>
+    <a href="/text">words</a>
+	<a href="/kana">kana quiz</a>
+	<a href="/reading">reading</a>
+</nav>
+
 {@render children()}
