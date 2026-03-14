@@ -83,8 +83,8 @@
     
     let dict = $state([])
     let index = $state()
-    // the longest word in the dict (already sorted from the backend so it's always at index 0), default value is 0
-    let maxlength = $derived(dict[0]?.word?.length ?? 0) // optional chaining (?.) is equal to .get() in python
+    // the longest len (can be either from reading or word) in the dict (index 0 because it's the longest from sorting in the backend), default value is 0
+    let maxlength = $derived(dict[0]?.len ?? 0) // optional chaining (?.) is equal to .get() in python
 
     
     function getDictColor(i) {

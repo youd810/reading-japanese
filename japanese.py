@@ -28,25 +28,42 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
     # so the way the query below works is that it will get all words from the db one by one 
     # and check if the pattern word+% match `?`
     # for example does the pattern 民主% match 民主主義？ (or vice versa) 
+    # TODO: IMPROVE QUERY TO DEINFLECT WORDS TO THEIR BASIC FORM (例: 行けば to 行く)
     if dict == "jp":
         cursor.execute("""
             SELECT * FROM jpdict 
             WHERE (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1) 
-            ORDER BY LENGTH(word) DESC""", (word, word)) 
+            ORDER BY CASE
+                WHEN ? LIKE word || '%' THEN LENGTH(word)
+                ELSE LENGTH(reading)
+            END DESC""", (word, word, word)) 
+    # in the case of CASE, it would only get words/readings that are already filtered by WHERE
+    # the logic itself is similar to WHERE with the matching stuff
     else:                                                                        
         cursor.execute("""
             SELECT * FROM endict 
             WHERE (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1) 
-            ORDER BY LENGTH(word) DESC""", (word, word)) 
+            ORDER BY CASE
+                WHEN ? LIKE word || '%' THEN LENGTH(word)
+                ELSE LENGTH(reading)
+            END DESC""", (word, word, word)) 
     result = cursor.fetchall()
     results = []
     for r in result:
+        if word.startswith(r["reading"]) and len(r["reading"]) >= 1:
+            length = len(r["reading"])
+        else:
+            length = len(r["word"])
+        # since it's a json string by default i need to parse the def back as a python object
+        # well it's because i didn't set ensure_ascii to True when dumping them into the database  
+        # which turned the letters into unicode bytes 
         results.append({
             "word" : r["word"],
             "reading" : r["reading"],
-            "definition" : json.loads(r["definition"]) # since it's a json string by default i need to parse it back as a python object
-        })                                             # well it's because i didn't set ensure_ascii to True when dumping them to the database   
-    return results                                     # which turned the letters into unicode bytes
+            "definition" : json.loads(r["definition"]),
+            "len" : length                 
+        })                                            
+    return results                                    
 
 # imagine having to resort to using nlp lib just to make a word counter lmao
 nlp = spacy.load("ja_ginza")
