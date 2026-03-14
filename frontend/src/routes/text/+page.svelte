@@ -62,7 +62,7 @@
 
     // for the mouse hover logic
     let timerdict;
-    function getDict(chars, lang) {
+    function getDict(chars, lang, i) {
         clearTimeout(timerdict)         
         timerdict = setTimeout(async () => {   
             try{
@@ -72,15 +72,27 @@
             }
             let result = await response.json(); 
             dict = result
+            index = i
             console.log(result);
             } catch (error){
             console.log("An error occured", error)
             alert("An error occured")
             }
-        }, 300)
+        }, 0) // the timer is useless with mouse click but I can't be bothered to dismantle the whole thing
     }
     
     let dict = $state([])
+    let index = $state()
+    // the longest word in the dict (already sorted from the backend so it's always at index 0), default value is 0
+    let maxlength = $derived(dict[0]?.word?.length ?? 0) // optional chaining (?.) is equal to .get() in python
+
+    
+    function getDictColor(i) {
+        if (i >= index && i < index + maxlength){
+            return {bg: "red", font: "white"}
+        }
+        return {bg: "transparent", font: "black"} // fallback for chars outside of index - maxlength range
+    }
     
 </script>
 <nav>
@@ -115,13 +127,17 @@
     {/if}
 <!-- dict mode -->
 {:else if textValue === "dictionary"}
+<!--todo: highlight selected text--> 
     {#if lValue === "English"}
         {#each naiyou as char, i}
-            <span onmouseenter={()=> getDict(naiyou.slice(i, i + 10), "en")} style="font-size: 18px;">{char}</span>
+            <!--declare the colors to shorten the line for char-->
+            {@const {bg, font} = getDictColor(i)} 
+            <span onclick={()=> getDict(naiyou.slice(i, i + 10), "en", i)} style="font-size: 18px; background-color: {bg}; color: {font}">{char}</span>
         {/each}
     {:else}
         {#each naiyou as char, i}
-            <span onmouseenter={()=> getDict(naiyou.slice(i, i + 10), "jp")} style="font-size: 18px;">{char}</span>
+            {@const {bg, font} = getDictColor(i)} 
+            <span onclick={()=> getDict(naiyou.slice(i, i + 10), "jp", i)} style="font-size: 18px; background-color: {bg}; color: {font}">{char}</span>
         {/each}
     {/if}
     {#each dict as {word, reading, definition}}
