@@ -14,8 +14,6 @@ app.add_middleware(
 )
 init_db()
 
-with open("kana.json", "r", encoding="utf-8") as f:
-    kana_list = json.loads(f.read())
 
 @app.get("/")
 def home():
@@ -65,6 +63,7 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
         })                                            
     return results                                    
 
+
 # imagine having to resort to using nlp lib just to make a word counter lmao
 nlp = spacy.load("ja_ginza")
 
@@ -83,9 +82,35 @@ def text(text: dict) -> dict:
             word_list.append(compound)
     return {"words" : word_list}
 
+
+with open("kana.json", "r", encoding="utf-8") as f:
+    kana_list = json.loads(f.read())
+
 @app.get("/api/kana")
 def kana(ji: str = "h") -> dict: 
     return kana_list["katakana"] if ji == "k" else kana_list["hiragana"]
+
+
+with open("texts.json", "r", encoding="utf-8") as f:
+    texts = json.loads(f.read())
+
+@app.get("/api/reading")
+def reading(field: str = "literature", diff: str = "easy") -> dict:
+    # making the arg names and key names the same saves the effort of if nesting
+    # if i assign the result in a var it works, but not with returning the result directly??
+    result = texts[field.lower()][diff.lower()]
+    return result
+    # below is an example of what will happen otherwise
+#   if field == "lit":
+#       text = texts["literature"]
+#       if diff == "e":
+#           return {"text" : text["easy"]["text"], "count" : text["easy"]["count"]}
+#       elif diff == "m":
+#           return texts["literature"]["medium"]["text"]
+#       elif diff == "h":
+#           return texts["literature"]["hard"]["text"]
+#   elif field == "pol":
+#       ...
 
 if __name__ == "__main__":
     uvicorn.run("japanese:app", host="0.0.0.0", port=8008, reload=True) # reload for debugging
