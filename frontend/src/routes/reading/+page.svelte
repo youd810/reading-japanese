@@ -56,7 +56,7 @@
 <p>your cpm is: {Math.round(cpm)}</p>
 <button onclick={()=> time = 0}>reset</button>
 {/if}
-<Switch colorScheme="red" size="sm" bind:value={fieldValue} design="multi" options={["Literature", "Politics", "Economics"]} label="Field"/>
+<Switch colorScheme="red" size="sm" bind:value={fieldValue} design="multi" options={["Literature", "Politics", "Technology"]} label="Field"/>
 <Switch colorScheme="red" size="sm" bind:value={diffValue} design="multi" options={["Easy", "Medium", "Hard"]} label="Difficulty"/>
 
-<p>{@html text}</p>
+<p style="font-size: 20px;">{@html text}</p>
