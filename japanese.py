@@ -19,14 +19,38 @@ init_db()
 def home():
     return "hey buddy i think you got the wrong door. the leather club is two blocks down."
 
+
+with open("deinflection.json", "r", encoding="utf-8") as f:
+    deinflect = json.loads(f.read())
+
 @app.get("/api/lookup")
 def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
     conn = get_db()                                 # also apparently lists, string, or anything as simple only requires queries instead of req body?
     cursor = conn.cursor()
+    results_temp = []
+    wordlen = [] # len if candidates
+    candidates = []
+    for i in range(len(word)):
+        substring = word[:i+1]
+        all_rules = [rule for rules in deinflect.values() for rule in rules] # deinflect = {category : rules}
+        for rule in all_rules:
+            # each loop checks whether the current substring ends with the current deinflection rule 
+            if substring.endswith(rule["in"]):
+                wordlen.append(substring)
+                candidate = substring[:-len(rule["in"])] + rule["out"]
+                candidates.append(candidate)
+
+    if candidates:
+        for candidate in candidates:
+            if dict == "jp":
+                cursor.execute("SELECT * FROM jpdict WHERE word = ? OR reading = ?", (candidate, candidate))
+            else:
+                cursor.execute("SELECT * FROM endict WHERE word = ? OR reading = ?", (candidate, candidate))
+            results_temp.extend(cursor.fetchall()) # .extend is similar to spread in js  
     # so the way the query below works is that it will get all words from the db one by one 
     # and check if the pattern word+% match `?`
     # for example does the pattern 民主% match 民主主義？ (or vice versa) 
-    # TODO: IMPROVE QUERY TO DEINFLECT WORDS TO THEIR BASIC FORM (例: 行けば to 行く)
+    # TODO: FIX DEINFLECTING AND SORTING AND HIGHLIGHING
     if dict == "jp":
         cursor.execute("""
             SELECT * FROM jpdict 
@@ -45,10 +69,21 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
                 WHEN ? LIKE word || '%' THEN LENGTH(word)
                 ELSE LENGTH(reading)
             END DESC""", (word, word, word)) 
-    result = cursor.fetchall()
+    results_temp.extend(cursor.fetchall())
     results = []
-    for r in result:
-        if word.startswith(r["reading"]) and len(r["reading"]) >= 1:
+    
+    for r in results_temp:
+        print(word.startswith(r["reading"]))
+        if word.startswith(r["reading"]):
+            print(r["reading"])
+
+        print(f"candidates: {candidates}, wordlen: {wordlen}")
+        print(f"reading: '{r['reading']}', len: {len(r['reading'])}")
+        print(f"startswith: {word.startswith(r['reading'])}, len check: {len(r['reading']) >= 1}")
+
+        if candidates and wordlen:
+            length = len(max(*wordlen))
+        elif word.startswith(r["reading"]) and len(r["reading"]) >= 1:
             length = len(r["reading"])
         else:
             length = len(r["word"])
@@ -61,6 +96,7 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
             "definition" : json.loads(r["definition"]),
             "len" : length                 
         })                                            
+    results.sort(key=lambda x: max(len(x["word"]), len(x["reading"])), reverse=True)
     return results                                    
 
 

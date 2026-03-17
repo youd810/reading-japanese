@@ -53,7 +53,7 @@
     let fieldValue = $state("Literature")
     let diffValue = $state("Easy")
 </script>
-{#if start === false}
+{#if start === false} <!-- actually i prefer this approach over toggling the variable with `!start`, just less confusion overall-->
 <button onclick={()=> {startTime(); show = false; start = true}}>start</button>
 {:else}
 <button onclick={()=> {clearInterval(interval); show = true; start = false}}>stop</button>
