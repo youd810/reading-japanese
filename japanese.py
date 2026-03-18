@@ -51,14 +51,19 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
     # and check if the pattern word+% match `?`
     # for example does the pattern 民主% match 民主主義？ (or vice versa) 
     # TODO: FIX DEINFLECTING AND SORTING AND HIGHLIGHING
+    placeholders = ','.join("?" * len(candidates))
     if dict == "jp":
-        cursor.execute("""
-            SELECT * FROM jpdict 
-            WHERE (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1) 
+        # TODO: 2 SELECTS IN 1 QUERY FOR SORTING
+        cursor.execute(f"""
+            SELECT * FROM (
+            SELECT *, ? as input FROM jpdict WHERE word IN ({placeholders}) OR reading IN ({placeholders})
+            UNION ALL
+            SELECT *, ? as input FROM jpdict 
+            WHERE (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1))
             ORDER BY CASE
-                WHEN ? LIKE word || '%' THEN LENGTH(word)
+                WHEN input LIKE word || '%' THEN LENGTH(word)
                 ELSE LENGTH(reading)
-            END DESC""", (word, word, word)) 
+            END DESC""", [word] + candidates + candidates + [word, word, word]) 
     # in the case of CASE, it would only get words/readings that are already filtered by WHERE
     # the logic itself is similar to WHERE with the matching stuff
     else:                                                                        
@@ -97,6 +102,7 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
             "len" : length                 
         })                                            
     results.sort(key=lambda x: max(len(x["word"]), len(x["reading"])), reverse=True)
+    conn.close()
     return results                                    
 
 
