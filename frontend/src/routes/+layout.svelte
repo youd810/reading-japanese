@@ -11,7 +11,7 @@
 <nav>
     <a href="/">home</a>
     <a href="/text">words</a>
-	<a href="/kana">kana quiz</a>
+	<a href="/quiz">quiz</a>
 	<a href="/reading">reading</a>
 </nav>
 

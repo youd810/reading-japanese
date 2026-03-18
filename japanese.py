@@ -123,9 +123,17 @@ def text(text: dict) -> dict:
 with open("kana.json", "r", encoding="utf-8") as f:
     kana_list = json.loads(f.read())
 
-@app.get("/api/kana")
-def kana(ji: str = "h") -> dict: 
-    return kana_list["katakana"] if ji == "k" else kana_list["hiragana"]
+with open("yojijukugo.json", "r", encoding="utf-8") as f:
+    yoji = json.loads(f.read())
+
+@app.get("/api/quiz")
+def kana(ji: str):
+    if ji == "k":
+        return kana_list["katakana"]  
+    elif ji == "h":
+        return kana_list["hiragana"]
+    else:
+        return yoji
 
 
 with open("texts.json", "r", encoding="utf-8") as f:

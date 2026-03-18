@@ -24,6 +24,7 @@
 		"vite": "^7.3.1"
 	},
 	"dependencies": {
-		"svelte-toggle-switch": "^2.3.1"
+		"svelte-toggle-switch": "^2.3.1",
+		"wanakana": "^5.3.1"
 	}
 }
