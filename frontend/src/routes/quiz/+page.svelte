@@ -39,7 +39,7 @@
     $effect(() => {
         if (inputEle) {
             wanakana.bind(inputEle)
-            return () => wanakana.unbind(inputEle)
+            return ()=> {if (inputEle) wanakana.unbind(inputEle)} // checks if inputEle isn't null
             }
     })
 
@@ -52,7 +52,7 @@
     <p style="font-size: 40px;">{randomEntry[0]}</p>
     {#if ji === "y"}
         <!-- this gets the value directly from the DOM event instead of relying on bind:value, so input reads the converted wanakana output -->
-        <input bind:this={inputEle} bind:value={answer} oninput={(e) => { answer = e.target.value; check() }}>
+        <input bind:this={inputEle} bind:value={answer} oninput={(e) => {answer = e.target.value; check()}}>
     {:else}
         <input bind:value={answer} oninput={check}> <!--checking in every input made if input matches the answer-->
     {/if}
@@ -62,4 +62,5 @@
 {#if ji === "y"}
     <p>Hint: {randomEntry[2]}</p>
 {/if}
-
+<br>
+<button onclick={()=> getMoji(ji)}>hard reset</button>
