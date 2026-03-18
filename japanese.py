@@ -27,8 +27,7 @@ with open("deinflection.json", "r", encoding="utf-8") as f:
 def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
     conn = get_db()                                 # also apparently lists, string, or anything as simple only requires queries instead of req body?
     cursor = conn.cursor()
-    results_temp = []
-    wordlen = [] # len if candidates
+    pairs = [] # a list of tuples of (original, deinflect) to validate later
     candidates = []
     for i in range(len(word)):
         substring = word[:i+1]
@@ -36,24 +35,16 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
         for rule in all_rules:
             # each loop checks whether the current substring ends with the current deinflection rule 
             if substring.endswith(rule["in"]):
-                wordlen.append(substring)
                 candidate = substring[:-len(rule["in"])] + rule["out"]
+                pairs.append((substring, candidate))
                 candidates.append(candidate)
-
-    if candidates:
-        for candidate in candidates:
-            if dict == "jp":
-                cursor.execute("SELECT * FROM jpdict WHERE word = ? OR reading = ?", (candidate, candidate))
-            else:
-                cursor.execute("SELECT * FROM endict WHERE word = ? OR reading = ?", (candidate, candidate))
-            results_temp.extend(cursor.fetchall()) # .extend is similar to spread in js  
+    placeholders = ','.join("?" * len(candidates))
+    if dict == "jp":
     # so the way the query below works is that it will get all words from the db one by one 
     # and check if the pattern word+% match `?`
     # for example does the pattern 民主% match 民主主義？ (or vice versa) 
-    # TODO: FIX DEINFLECTING AND SORTING AND HIGHLIGHING
-    placeholders = ','.join("?" * len(candidates))
-    if dict == "jp":
-        # TODO: 2 SELECTS IN 1 QUERY FOR SORTING
+    # the parentheses at the start are important to wrap the results of the two selects into one, otherwise it will return an error 
+    # TODO: FIX DEINFLECTION AND SORTING AND HIGHLIGHING (done?　YES THEY'RE ALL DONE DON'T TOUCH THEM ANYMORE *coping*) 
         cursor.execute(f"""
             SELECT * FROM (
             SELECT *, ? as input FROM jpdict WHERE word IN ({placeholders}) OR reading IN ({placeholders})
@@ -66,28 +57,33 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
             END DESC""", [word] + candidates + candidates + [word, word, word]) 
     # in the case of CASE, it would only get words/readings that are already filtered by WHERE
     # the logic itself is similar to WHERE with the matching stuff
-    else:                                                                        
-        cursor.execute("""
-            SELECT * FROM endict 
-            WHERE (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1) 
+    # theoretically i can merge them into 1 query with dict argument being dict name but i'm not risking it 
+    else:                                                             
+        cursor.execute(f"""
+            SELECT * FROM (
+            SELECT *, ? as input FROM endict WHERE word IN ({placeholders}) OR reading IN ({placeholders})
+            UNION ALL
+            SELECT *, ? as input FROM endict 
+            WHERE (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1))
             ORDER BY CASE
-                WHEN ? LIKE word || '%' THEN LENGTH(word)
+                WHEN input LIKE word || '%' THEN LENGTH(word)
                 ELSE LENGTH(reading)
-            END DESC""", (word, word, word)) 
-    results_temp.extend(cursor.fetchall())
+            END DESC""", [word] + candidates + candidates + [word, word, word]) 
+    result = cursor.fetchall()
+    # validates so only deinflected words (pair[1]) that are actually exsist in result get in for sorting
+    # (well basically to make the highlighting non-greedy)
+    valid_pairs = [pair for pair in pairs if pair[1] in [r["word"] for r in result]] 
     results = []
-    
-    for r in results_temp:
+    for r in result:
         print(word.startswith(r["reading"]))
         if word.startswith(r["reading"]):
             print(r["reading"])
-
-        print(f"candidates: {candidates}, wordlen: {wordlen}")
+        print(f"valid: {valid_pairs}")
+        print(f"candidates: {candidates}, pairs: {pairs}")
         print(f"reading: '{r['reading']}', len: {len(r['reading'])}")
         print(f"startswith: {word.startswith(r['reading'])}, len check: {len(r['reading']) >= 1}")
-
-        if candidates and wordlen:
-            length = len(max(*wordlen))
+        if valid_pairs:
+            length = len(max(valid_pairs, key=lambda x: len(x[0]))[0]) # 0 = original, 1 = deinflect
         elif word.startswith(r["reading"]) and len(r["reading"]) >= 1:
             length = len(r["reading"])
         else:
@@ -101,7 +97,6 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
             "definition" : json.loads(r["definition"]),
             "len" : length                 
         })                                            
-    results.sort(key=lambda x: max(len(x["word"]), len(x["reading"])), reverse=True)
     conn.close()
     return results                                    
 

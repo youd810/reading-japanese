@@ -1,1 +1,1 @@
-<h1>Testing</h1>
+<h1 style="font-family: 'Comic Sans MS'; font-size: 110px; background-image: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);">GOOD MORING I LOVE CSS *blinks tiwce*</h1>
