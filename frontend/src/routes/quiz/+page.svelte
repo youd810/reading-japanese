@@ -45,6 +45,10 @@
 
 </script>
 
+
+<style>
+    
+</style>
 <a href="/quiz?ji=h" onclick={()=> getMoji("h")}>Hiragana</a>
 <a href="/quiz?ji=k" onclick={()=> getMoji("k")}>Katakana</a>
 <a href="/quiz?ji=y" onclick={()=> getMoji("y")}>四字熟語</a>
@@ -62,5 +66,6 @@
 {#if ji === "y"}
     <p>Hint: {randomEntry[2]}</p>
 {/if}
+<br>
 <br>
 <button onclick={()=> getMoji(ji)}>hard reset</button>

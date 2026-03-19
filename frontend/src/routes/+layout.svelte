@@ -1,5 +1,6 @@
 <script>
 	import favicon from '$lib/assets/favicon.svg';
+	import '/src/global.css';
 
 	let { children } = $props();
 </script>
@@ -13,6 +14,9 @@
     <a href="/text">words</a>
 	<a href="/quiz">quiz</a>
 	<a href="/reading">reading</a>
+	<a href="/misc">misc</a>
 </nav>
 
-{@render children()}
+<div class="container">
+	{@render children()}
+</div>
