@@ -1,20 +1,85 @@
 @import url('https://fonts.googleapis.com/css2?family=Klee+One&family=Noto+Sans+JP:wght@100..900&family=Shippori+Mincho&display=swap');
+	
+	* {
+	/*	outline: 1px solid red;  for layout debugging */
+		box-sizing: border-box;  /* this makes padding included in the width calculation instead of added on top of it */
+	}
 	body { 
 		font-family: "Shippori Mincho", serif; 
 		font-weight: 500;
+		/*background-color: #EFE6D5; */
 		display: flex;
     	flex-direction: column;
     	align-items: center;
+		margin: 0px; /* these resolve the white line on top of `nav` */
+		padding: 0px;
 	}
 	.container {
-    width: 75%;
-    max-width: 1400px;
-    /*border: 1px solid black;
-    padding: 15px; */
+		width: 70%;
+		max-width: 1400px;
+		padding-top: 60px; /* pad it so it doesn't get buried under `nav` */
+		/*border: 1px solid black;
+		padding: 15px; */
 	}
 	.controls {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
+		display: flex;
+		flex-direction: column; /* this is for stacking them vertically */
+		align-items: center;
+		gap: 10px;
+	}
+	.nav {
+		position: fixed;
+		top: 0; /* pins the nav to the top of the viewport */
+		font-size: 19px;
+		padding: 10px;
+		background-color: #1D1C1A;
+		opacity: 95%;
+		width: 100%;
+		z-index: 100;
+	}
+	.nav a { /* for the individual item in nav*/
+		/* font-family: consolas; */
+		color: white;
+		text-decoration: none;
+	}
+	nav {
+		display: flex;
+		flex-direction: row;
+		justify-content: center; /* this handles horizontal centering when direction is row */
+    	gap: 20px;
+	}
+	.quiz-container {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		height: calc(100vh - 40vh);
+	}
+	button{
+		background-color: #EF4444;
+		color: white;
+		font-size: 16px;
+		padding: 5px;
+		border-radius: 5px;
+		border: none;      
+		
+	}
+	button:hover{
+		cursor: pointer;
+	}
+	.button-bottom {
+		position: fixed;
+		bottom: 20px;
+		left: 50%;
+		transform: translateX(-50%);
+	}
+	a{ /* for links */
+		color: #df1c1c;
+		text-decoration: none;
+	}
+	.choices{
+		font-size: 28px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
 	}

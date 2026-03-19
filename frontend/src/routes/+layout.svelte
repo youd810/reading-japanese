@@ -9,13 +9,15 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-<nav>
-    <a href="/">home</a>
-    <a href="/text">words</a>
-	<a href="/quiz">quiz</a>
-	<a href="/reading">reading</a>
-	<a href="/misc">misc</a>
-</nav>
+<div class="nav">
+	<nav>
+		<a href="/">Home</a>
+		<a href="/text">Text</a>
+		<a href="/reading">Reading</a>
+		<a href="/quiz">Quiz</a>
+		<a href="/misc">Misc</a>
+	</nav>
+</div>
 
 <div class="container">
 	{@render children()}

@@ -137,7 +137,11 @@
             <span onclick={()=> getDict(naiyou.slice(i, i + 10), "jp", i)} style="font-size: 18px; background-color: {bg}; color: {font}">{char}</span>
         {/each}
     {/if}
-    {#each dict as {word, reading, definition}}
-        <p>{word}, {reading}, {definition}</p>
+    {#each dict as {word, reading, definition}, i}
+        <p>
+            Word: {word}<br>
+            Reading: {reading}<br> 
+            Definition: {definition}<br>
+        </p>
     {/each}
 {/if}

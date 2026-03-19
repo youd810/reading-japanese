@@ -63,7 +63,7 @@
     <p style="font-size: 40px;"><b>{String(minute).padStart(2,"0")}:{String(second).padStart(2,"0")}:{String(notms).padStart(2,"0")}</b></p>
 </div>
 
-<Switch colorScheme="red" size="sm" bind:value={fieldValue} design="multi" options={["Literature", "Politics", "Technology"]} label="Field"/>
+<Switch colorScheme="red" size="sm" bind:value={fieldValue} design="multi" options={["Literature", "Politics", "Technology"]} label="Field" rounded="true"/>
 <Switch colorScheme="red" size="sm" bind:value={diffValue} design="multi" options={["Easy", "Medium", "Hard"]} label="Difficulty"/>
 
 <div class="controls">
