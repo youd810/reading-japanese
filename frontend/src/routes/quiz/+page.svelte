@@ -1,6 +1,7 @@
 <title>Quiz</title>
 <script>
     import { page } from "$app/state"; // store or state? both work (but stores needs $ symbol) 
+    import { fade } from "svelte/transition";
     import * as wanakana from 'wanakana'
 
    
@@ -45,35 +46,39 @@
     })
 
 </script>
-{#if ji}
-    <a href="/quiz">Back</a>
-{/if}
 
-<div class="quiz-container">
-    {#if !ji}
-        <div class="choices">
-            <a href="/quiz?ji=h" onclick={()=> getMoji("h")}>Hiragana</a>
-            <a href="/quiz?ji=k" onclick={()=> getMoji("k")}>Katakana</a>
-            <a href="/quiz?ji=y" onclick={()=> getMoji("y")}>四字熟語</a>
-        </div>
-        {/if}
+{#key ji}
+    <div  in:fade={{duration: 250}}>
         {#if ji}
-            <p style="font-size: 60px;">{randomEntry[0]}</p>
-            {#if ji === "y"}
-                <!-- this gets the value directly from the DOM event instead of relying on bind:value, so input reads the converted wanakana output -->
-                <input bind:this={inputEle} bind:value={answer} oninput={(e) => {answer = e.target.value; check()}}>
+            <a href="/quiz">Back</a>
+        {/if}
+
+        <div class="quiz-container">
+            {#if !ji}
+                <div class="choices">
+                    <a href="/quiz?ji=h" onclick={()=> getMoji("h")}>Hiragana</a>
+                    <a href="/quiz?ji=k" onclick={()=> getMoji("k")}>Katakana</a>
+                    <a href="/quiz?ji=y" onclick={()=> getMoji("y")}>四字熟語</a>
+                </div>
+                {/if}
+                {#if ji}
+                    <p style="font-size: 60px;">{randomEntry[0]}</p>
+                    {#if ji === "y"}
+                        <!-- this gets the value directly from the DOM event instead of relying on bind:value, so input reads the converted wanakana output -->
+                        <input bind:this={inputEle} bind:value={answer} oninput={(e) => {answer = e.target.value; check()}}>
+                    {:else}
+                        <input bind:value={answer} oninput={check}> <!--checking in every input made if input matches the answer-->
+                    {/if}
             {:else}
-                <input bind:value={answer} oninput={check}> <!--checking in every input made if input matches the answer-->
+                <p>select an option</p>
             {/if}
-    {:else}
-        <p>select an option</p>
-    {/if}
-    {#if ji === "y"}
-        <p>Hint: {randomEntry[2]}</p>
-    {/if}
-    <br>
-    <br>
-</div>
-{#if ji}
-        <button class="button-bottom" onclick={()=> getMoji(ji)}>Hard Reset</button>
-{/if}
+            {#if ji === "y"}
+                <p>Hint: {randomEntry[2]}</p>
+            {/if}
+        </div>
+
+        {#if ji}
+            <button class="button-bottom" onclick={()=> getMoji(ji)}>Hard Reset</button>
+        {/if}
+    </div>
+{/key}

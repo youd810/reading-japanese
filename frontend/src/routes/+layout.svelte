@@ -1,6 +1,8 @@
 <script>
 	import favicon from '$lib/assets/favicon.svg';
 	import '/src/global.css';
+	import {blur, draw, fade, fly, scale, slide} from 'svelte/transition'
+	import {page} from '$app/state'
 
 	let { children } = $props();
 </script>
@@ -19,6 +21,8 @@
 	</nav>
 </div>
 
-<div class="container">
+{#key page.url.pathname}
+<div class="container" in:fade={{duration: 250}}>
 	{@render children()}
 </div>
+{/key}

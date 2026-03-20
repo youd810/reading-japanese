@@ -34,7 +34,8 @@
 		padding: 0px;
 		background-color: #1D1C1A; /*TODO: add gradient for 3d effect?*/
 		opacity: 95%;
-		width: 100%;
+		width: 100vw; /* vw instead of percent to ignore scrollbar into the calculation*/
+		left: 0;
 		z-index: 100;
 	}
 	.nav a { /* for the individual item in nav*/
@@ -59,7 +60,7 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		height: calc(100vh - 20vh);
+		height: calc(100vh - 40vh);
 	}
 	.button-timer{
 		background-color: #EF4444;
@@ -119,4 +120,7 @@
 	}
 	input:focus{
 		outline: none;
+	}
+	.hidden { /* hide an item without making it completely disappear*/
+		visibility: hidden;
 	}
