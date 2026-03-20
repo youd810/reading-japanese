@@ -1,3 +1,4 @@
+<title>Reading</title>
 <script>
     import Switch from "svelte-toggle-switch";
 
@@ -24,6 +25,14 @@
     let text = $state("")
     let count = $state()
     let cpm =  $derived((count / time)*6000)  // 60 for s, 600 for ds, 60000 for ms
+
+    // auto scroll for cpm/reset button
+    let resultEle
+    $effect(() => {
+        if (show && time > 0) {
+            resultEle?.scrollIntoView({behavior: "smooth"})
+        }
+    })
 
     // text logic
     async function getText(field, diff) {
@@ -53,31 +62,33 @@
     let fieldValue = $state("Literature")
     let diffValue = $state("Easy")
 </script>
+
 <div class="controls">
-    {#if start === false} <!-- actually i prefer this approach over toggling the variable with `!start`, just less confusion overall-->
-        <button onclick={()=> {startTime(); show = false; start = true}}>start</button>
-    {:else}
-        <button onclick={()=> {clearInterval(interval); show = true; start = false}}>stop</button>
-    {/if}
     <!--padding only works with str so convert first-->
     <p style="font-size: 40px;"><b>{String(minute).padStart(2,"0")}:{String(second).padStart(2,"0")}:{String(notms).padStart(2,"0")}</b></p>
+
+    {#if start === false} <!-- actually i prefer this approach over toggling the variable with `!start`, just less confusion overall-->
+        <button class="button-timer" onclick={()=> {startTime(); show = false; start = true}}>START</button>
+    {/if}
 </div>
 
 <Switch colorScheme="red" size="sm" bind:value={fieldValue} design="multi" options={["Literature", "Politics", "Technology"]} label="Field" rounded="true"/>
 <Switch colorScheme="red" size="sm" bind:value={diffValue} design="multi" options={["Easy", "Medium", "Hard"]} label="Difficulty"/>
 
 <div class="controls">
-<p style="font-size: 20px;">{@html text}</p>
-<br>
-<p style="font-size: 40px;"><b>{String(minute).padStart(2,"0")}:{String(second).padStart(2,"0")}:{String(notms).padStart(2,"0")}</b></p>
+    <p style="font-size: 20px;">{@html text}</p>
+    <br>
+    <p style="font-size: 40px;"><b>{String(minute).padStart(2,"0")}:{String(second).padStart(2,"0")}:{String(notms).padStart(2,"0")}</b></p>
 
-{#if show && time > 0}
-<p>your cpm is: {Math.round(cpm)}</p>
-<button onclick={()=> time = 0}>reset</button>
-{/if}
-{#if start === false}
-<button onclick={()=> {startTime(); show = false; start = true}}>start</button>
-{:else}
-<button onclick={()=> {clearInterval(interval); show = true; start = false}}>stop</button>
-{/if}
+    <div bind:this={resultEle}>
+        {#if show && time > 0}
+            <p style="display: flex; flex-direction: column; align-items: center">Your cpm is: {Math.round(cpm)}</p>
+            <button class="button-timer" onclick={()=> time = 0}>Reset</button>
+        {/if}
+    </div>
+    {#if start === false && time === 0}
+        <button class="button-timer" onclick={()=> {startTime(); show = false; start = true}}>START</button>
+    {:else if start === true}
+        <button class="button-timer" onclick={()=> {clearInterval(interval); show = true; start = false}}>STOP</button>
+    {/if}
 </div>

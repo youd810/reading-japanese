@@ -116,7 +116,8 @@ def text(text: dict) -> dict:
             for child in word.children: # x.children gives you all tokens that point to the current token as their head.
                 if child.pos_ in ["AUX", "SCONJ"]:
                     compound += str(child)
-            word_list.append(compound)
+            if compound.strip(): # filters whitespaces of any kind (hopefully)
+                word_list.append(compound)
     return {"words" : word_list}
 
 

@@ -1,3 +1,4 @@
+<title>Quiz</title>
 <script>
     import { page } from "$app/state"; // store or state? both work (but stores needs $ symbol) 
     import * as wanakana from 'wanakana'
@@ -57,7 +58,7 @@
         </div>
         {/if}
         {#if ji}
-            <p style="font-size: 40px;">{randomEntry[0]}</p>
+            <p style="font-size: 60px;">{randomEntry[0]}</p>
             {#if ji === "y"}
                 <!-- this gets the value directly from the DOM event instead of relying on bind:value, so input reads the converted wanakana output -->
                 <input bind:this={inputEle} bind:value={answer} oninput={(e) => {answer = e.target.value; check()}}>
@@ -74,7 +75,5 @@
     <br>
 </div>
 {#if ji}
-    <div class="button-bottom">
-        <button onclick={()=> getMoji(ji)}>hard reset</button>
-    </div>
+        <button class="button-bottom" onclick={()=> getMoji(ji)}>Hard Reset</button>
 {/if}

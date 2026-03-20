@@ -1,3 +1,4 @@
+<title>Text</title>
 <script>
     import Switch from 'svelte-toggle-switch'
 
@@ -97,7 +98,7 @@
 </script>
 
 <br>
-<textarea bind:value={naiyou} oninput={sendText} style="font-size: 16px;"></textarea>
+<textarea bind:value={naiyou} oninput={sendText} placeholder="Input or paste your text here"></textarea>
 <p>Word count estimation: {wordcount}</p>
 <p>Character count: {naiyou.length}</p> <!--for char it's straightforward-->
 <p><b>NOTE: this word counter works by using an arbitrary indicator of how words should be segmented, as there is no objective way to count words in Japanese.</b></p>
@@ -117,6 +118,13 @@
             <span style="font-size: 18px; background-color: {colors[i%colors.length]}">{word}</span>
         {/each}
     {:else if hlValue == "char"}
+        <p>
+            <span style="background-color: {charColors["hiragana"]};">あ</span> Hiragana 
+            <span style="background-color: {charColors["katakana"]};">ア</span> Katakana 
+            <span style="background-color: {charColors["kanji"]};">亜</span> Kanji 
+            <span style="background-color: {charColors["other"]};">～</span> Others 
+        </p>
+        
         {#each naiyou as char}
             <!--call the getCharType with char as arg first then what it returns will become the key-->
             <span style="font-size: 18px; background-color: {charColors[getCharType(char)]}">{char}</span>
