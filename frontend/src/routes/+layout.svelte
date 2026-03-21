@@ -11,6 +11,7 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
+{#if page.url.pathname !== "/"}
 <div class="nav">
 	<nav>
 		<a href="/">Home</a>
@@ -20,9 +21,10 @@
 		<a href="/misc">Misc</a>
 	</nav>
 </div>
+{/if}
 
 {#key page.url.pathname}
-<div class="container" in:fade={{duration: 250}}>
+<div class="container" in:fly={{x: 200, duration: 250}}>
 	{@render children()}
 </div>
 {/key}

@@ -1,12 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Klee+One&family=Noto+Sans+JP:wght@100..900&family=Shippori+Mincho&display=swap');
 	
 	* {
-	/* outline: 1px solid red;  	for layout debugging */
+	/*  outline: 1px solid red;  	for layout debugging */
 		box-sizing: border-box;  /* this makes padding included in the width calculation instead of added on top of it */
 	}
 	body { 
 		font-family: "Shippori Mincho", serif; 
 		font-weight: 500;
+		font-size: 18px;
 		/*background-color: #EFE6D5; */
 		display: flex;
     	flex-direction: column;
@@ -20,6 +21,40 @@
 		padding-top: 60px; /* pad it so it doesn't get buried under `nav` */
 		/*border: 1px solid black;
 		padding: 15px; */
+	}
+	.homepage{
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		font-size: 38px;
+		height: calc(100vh - 25vh);
+ 
+	}
+	/* bar logic */
+	.homepage a {
+		position: relative; /* in a nutshell this prevents the bar from going haywire */
+	}
+	.homepage a::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 50%; /* places the bar at the center of `a` */
+		transform: translateX(-50vw); /* makes it so the bar starts at the leftmost of the screen (`a` - 50vw) */
+		width: 100vw;
+		height: 100%;
+		background-color: #5c5953;
+		opacity: 0;
+		transition: opacity 0.2s ease;
+	}
+	.homepage a:hover::before {
+		opacity: 0.5;
+	}
+	.message{
+		position: fixed;
+		bottom: 20px;
+		left: 50%;
+		transform: translateX(-50%)
 	}
 	.controls {
 		display: flex;
@@ -99,6 +134,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+		height: 5vh;
 	}
 	textarea{
 		width: 100%;
@@ -121,6 +157,12 @@
 	input:focus{
 		outline: none;
 	}
-	.hidden { /* hide an item without making it completely disappear*/
+	.hidden { /* hides an item without making it completely disappear*/
 		visibility: hidden;
+	}
+	.sauce{
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start; /* prevents the link hover from stretching all the way*/
+		gap: 5px;
 	}

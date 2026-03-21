@@ -30,7 +30,7 @@
     // auto scroll for cpm/reset button
     let resultEle
     $effect(() => {
-        if (show && time > 0) {
+        if (show && time) { // time > 0 is really just a boolean statement
             resultEle?.scrollIntoView({behavior: "smooth"})
         }
     })
@@ -68,7 +68,7 @@
     <!--padding only works with str so convert first-->
     <p style="font-size: 40px;"><b>{String(minute).padStart(2,"0")}:{String(second).padStart(2,"0")}:{String(notms).padStart(2,"0")}</b></p>
 
-    {#if start === false && time === 0} 
+    {#if !start && !time} 
         <!-- actually i prefer this approach over toggling the variable with `!start`, just less confusion overall-->
         <button class="button-timer" onclick={()=> {startTime(); show = false; start = true}}>START</button>
     {:else}
@@ -81,22 +81,22 @@
 
 <div class="controls">
     {#key text} <!-- makes it so the transition happens on text change-->
-        <p style="font-size: 20px;" in:fly={{x: 200, duration: 250}}>{@html text}</p>
+        <p style="font-size: 22px;" in:fly={{x: 200, duration: 250}}>{@html text}</p>
     {/key}
     <br>
-    {#if start === true || time > 0}
+    {#if start || time}
         <p style="font-size: 40px;"><b>{String(minute).padStart(2,"0")}:{String(second).padStart(2,"0")}:{String(notms).padStart(2,"0")}</b></p>
     {:else}
         <p class="hidden" style="font-size: 40px;">you aren't supposed to see this</p>
     {/if}
 
     <div bind:this={resultEle}>
-        {#if show && time > 0}
+        {#if show && time}
             <p style="display: flex; flex-direction: column; align-items: center">Your cpm is: {Math.round(cpm)}</p>
             <button class="button-timer" onclick={()=> time = 0}>Reset</button>
         {/if}
     </div>
-    {#if start === true}
+    {#if start}
         <button class="button-timer" onclick={()=> {clearInterval(interval); show = true; start = false}}>STOP</button>
     {/if}
 </div>

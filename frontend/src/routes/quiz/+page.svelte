@@ -59,18 +59,17 @@
                     <a href="/quiz?ji=h" onclick={()=> getMoji("h")}>Hiragana</a>
                     <a href="/quiz?ji=k" onclick={()=> getMoji("k")}>Katakana</a>
                     <a href="/quiz?ji=y" onclick={()=> getMoji("y")}>四字熟語</a>
+                    <p style="font-size: 18px;">select an option</p>
                 </div>
+            {/if}
+            {#if ji}
+                <p style="font-size: 60px;">{randomEntry[0]}</p>
+                {#if ji === "y"}
+                    <!-- this gets the value directly from the DOM event instead of relying on bind:value, so input reads the converted wanakana output -->
+                    <input bind:this={inputEle} bind:value={answer} oninput={(e) => {answer = e.target.value; check()}}>
+                {:else}
+                    <input bind:value={answer} oninput={check}> <!--checking in every input made if input matches the answer-->
                 {/if}
-                {#if ji}
-                    <p style="font-size: 60px;">{randomEntry[0]}</p>
-                    {#if ji === "y"}
-                        <!-- this gets the value directly from the DOM event instead of relying on bind:value, so input reads the converted wanakana output -->
-                        <input bind:this={inputEle} bind:value={answer} oninput={(e) => {answer = e.target.value; check()}}>
-                    {:else}
-                        <input bind:value={answer} oninput={check}> <!--checking in every input made if input matches the answer-->
-                    {/if}
-            {:else}
-                <p>select an option</p>
             {/if}
             {#if ji === "y"}
                 <p>Hint: {randomEntry[2]}</p>
