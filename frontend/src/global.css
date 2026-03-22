@@ -166,3 +166,9 @@
 		align-items: flex-start; /* prevents the link hover from stretching all the way*/
 		gap: 5px;
 	}
+	canvas {
+		position: fixed;
+		top: 0;
+		left: 0;
+		z-index: -1;
+	}

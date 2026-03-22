@@ -19,6 +19,14 @@ init_db()
 def home():
     return "hey buddy i think you got the wrong door. the leather club is two blocks down."
 
+with open("chars.json", "r", encoding="utf-8") as f:
+    chars = json.loads(f.read())
+
+@app.get("/api/home")
+def homepage():
+    return chars
+
+
 
 with open("deinflection.json", "r", encoding="utf-8") as f:
     deinflect = json.loads(f.read())
