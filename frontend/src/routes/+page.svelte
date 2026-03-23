@@ -3,7 +3,7 @@
 <script>
     import { onMount } from "svelte";
     import Switch from "svelte-toggle-switch";
-    
+    console.log("component mounted")
     let hoverVal = $state("")
 
     let letters = $state([]);
@@ -21,7 +21,6 @@
             throw new Error(`HTTP Error: ${response.status}`);
         }
         letters = await response.json()
-        console.log(letters);
         } catch (error){
         console.log("An error occured", error);
         }
@@ -75,25 +74,39 @@
 
     function startAnim(){
         if (interval) return // this prevents interval from going haywire in case user keeps calling startanim with onclick
+
         interval = setInterval(pushChar, 1000)
         anim = requestAnimationFrame(rain)
     }
 
-    onMount( async ()=> { // onmount instead of effect because you want it to run only once
+    function handleVisibility() {
+        if (document.hidden) { // pauses the animation when in other tabs to save on performance
+            cancelAnimationFrame(anim)
+            clearInterval(interval)
+            interval = 0
+        } else if (!document.hidden && !off) {
+            startAnim()
+        }
+    }
+
+    onMount( async ()=> { // onmount instead of effect for the preps because you want it to run only once
         await getChars() // wait for this otherwise the first few chars would be undefined
-        document.addEventListener("visibilitychange", () => { // pauses the animation when in other tabs to save on performance
-            if (document.hidden) {
-                cancelAnimationFrame(anim)
-                clearInterval(interval)
-                interval = 0
-            } else if (!document.hidden && !off) {
-                startAnim()
-            }
-        })
+        document.addEventListener("visibilitychange", handleVisibility) 
         ctx = canvas.getContext("2d") // this is a native js API so no need to import
         canvas.width = window.innerWidth
         canvas.height = window.innerHeight
         startAnim()
+    })
+
+    // cleanup function for interval so it stops running after navigating out of homepage
+    // moved it out of onmount async because async will always return promise, and svelte expects a function 
+    // so it will just ignore the cleanup function inside of an async function even though the function is inside the promise
+    $effect(()=> { 
+        return ()=> { 
+            clearInterval(interval)
+            cancelAnimationFrame(anim)
+            document.removeEventListener("visibilitychange", handleVisibility)
+        }
     })
 
 
@@ -128,6 +141,10 @@
 
 <canvas bind:this={canvas}></canvas> <!-- set up the canvas first before everything else -->
 
+<div class= "off-toggle" onclick={()=> off ? stopAnim() : startAnim()}> <!-- this implementation is dumb but it works so w/e -->
+    <Switch design="slider" colorScheme="red" bind:value={off} label="雨うぜぇ！"/>
+</div>
+
 <div class="homepage">
 <h1>Welcome!</h1>
 
@@ -137,9 +154,6 @@
 <a href="/misc" onmouseenter={()=> hoverVal = "misc"} onmouseleave={()=> hoverVal = ""}>Misc</a>
 </div>
 
-<div class= "off-toggle" onclick={()=> off ? stopAnim() : startAnim()}> <!-- this implementation is dumb but it works so w/e -->
-    <Switch design="slider" colorScheme="red" bind:value={off} label="雨うぜぇ！"/>
-</div>
 
 
 <div class="message">
@@ -153,3 +167,5 @@
         <span>Other stuff</span>
     {/if}
 </div>
+
+

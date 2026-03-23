@@ -16,10 +16,17 @@
         clearInterval(interval)
         startTimestamp = Date.now() // Date.now() instead of time++ to prevent drifting
         interval = setInterval(() => {
+            console.log("tick")
             // flooring doesn't affect acurracy at all in this case; it's only there to hide decimals
             time = Math.floor((Date.now() - startTimestamp)/ 10) 
         }, 10)
     }
+
+    $effect(()=> {
+        return ()=> {
+            clearInterval(interval) // cleanup in case user starts a timer then navigate away without stopping it
+        }
+    })
 
     let show = $state(false) 
     let start = $state(false)
@@ -57,7 +64,6 @@
     // which means no need for if statements for which text should be displayed 
     $effect(()=>{
         getText(fieldValue, diffValue);  
-
     })
 
     let fieldValue = $state("Literature")
