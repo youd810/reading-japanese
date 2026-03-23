@@ -2,15 +2,16 @@
 
 <script>
     import { onMount } from "svelte";
+    import Switch from "svelte-toggle-switch";
     
     let hoverVal = $state("")
 
-
-    let letters = $state([]) 
-    let letter = $state({})
-    let chars = $state([])
+    let letters = $state([]);
+    let chars = $state([]);
     let canvas;
-    let ctx
+    let ctx;
+    let anim;
+    let off = $state();
     
 
     async function getChars() {
@@ -27,53 +28,101 @@
     }
 
     // animation logic
-    function rain(){
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
+    function rain(){ // runs for 1 frame
+        ctx.clearRect(0, 0, canvas.width, canvas.height) // clears canvas on every frame to prevent trailing
         for (let i = 0; i < chars.length; i++){
             ctx.font = `${chars[i].size}px serif`
             chars[i].y += chars[i].speed;
             chars[i].rotation += chars[i].speed * 0.015;
             ctx.save()
-            ctx.translate(chars[i].x, chars[i].y)
-            ctx.rotate(chars[i].rotation)
-            ctx.textAlign = "center" // these fix the axis problem
-            ctx.textBaseline = "middle"
-            ctx.fillText(chars[i].char, 0, 0)
-            ctx.restore()
+            ctx.translate(chars[i].x, chars[i].y) // set the origin pos (0) to current i pos (x, y) respectively
+            ctx.rotate(chars[i].rotation) // always rotates around the current origin pos, that's why you have to translate() first
+            ctx.textAlign = "center" // these fix the axis problem (x axis)
+            ctx.textBaseline = "middle" // (y axis)
+            ctx.fillText(chars[i].char, 0, 0) // 0 because read translate()
+            ctx.restore() // reset translate - baseline back for the next i
             if (chars[i].y > (canvas.height + chars[i].size)){
                 chars.splice(i, 1)
-                // shifts back i after splicing, because splicing brings the next element down to index i, but then i++ skips it
-                // because the next step is i++, then animate(i), what we want is  i > i-- > i++ = i
+                // shifts back i after splicing, because splicing brings the next item down to index i, but then i++ skips it
+                // and because the next step is i++, then animate(i), what we want is  i > i-- > i++ = i
                 // otherwise the skipped i will flicker
                 i-- 
             }
         }
-        requestAnimationFrame(rain);
+        anim = requestAnimationFrame(rain); // runs again (60 calls per second (bound by fps) by default)
     }
-     
-    onMount(async ()=> { // onmount instead of effect because you want it to run only once
+
+    let interval;
+
+    function pushChar(){
+        chars.push({ 
+            char : letters[Math.floor(Math.random() * letters.length)], // function to reference a reactive var
+            size: Math.random() * 40 + 50,  // 40-90px
+            speed: Math.random() * 3 + 1,   // 1-4px per frame 
+            x: Math.random() * canvas.width,
+            y: 0,                           // starts at top
+            rotation: 0                     // starts at 0, increments each frame
+        })
+    }
+
+    function stopAnim(){
+        chars = []
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        cancelAnimationFrame(anim)
+        clearInterval(interval)
+        interval = 0 // set interval to false for a check
+    }
+
+    function startAnim(){
+        if (interval) return // this prevents interval from going haywire in case user keeps calling startanim with onclick
+        interval = setInterval(pushChar, 1000)
+        anim = requestAnimationFrame(rain)
+    }
+
+    onMount( async ()=> { // onmount instead of effect because you want it to run only once
         await getChars() // wait for this otherwise the first few chars would be undefined
-        setInterval(() => {
-            chars.push({ // put this inside of `effect` otherwise canvas would be undefined
-                char : letters[Math.floor(Math.random() * letters.length)], // function to reference a reactive var
-                size: Math.random() * 40 + 50,  // 40-90px
-                speed: Math.random() * 3 + 1,   // 1-4px per frame 
-                x: Math.random() * canvas.width,
-                y: 0,                            // starts at top
-                rotation: 0                      // starts at 0, increments each frame
-            })
-        }, 1000);
-        ctx = canvas.getContext("2d") // this is a native lib so no need to import
+        document.addEventListener("visibilitychange", () => { // pauses the animation when in other tabs to save on performance
+            if (document.hidden) {
+                cancelAnimationFrame(anim)
+                clearInterval(interval)
+                interval = 0
+            } else if (!document.hidden && !off) {
+                startAnim()
+            }
+        })
+        ctx = canvas.getContext("2d") // this is a native js API so no need to import
         canvas.width = window.innerWidth
         canvas.height = window.innerHeight
-        requestAnimationFrame(rain)
+        startAnim()
     })
+
 
 </script>
 
 <style>
     :global(body) {
         overflow-x: hidden;
+    }
+    .off-toggle{ /* put these (not this one in particular) in here because toggle switch is an external lib and needs to be imported */
+	position: fixed;
+	bottom: 2%;
+	left: 2%
+    }
+    .off-toggle :global(.switch--slider) {
+        width: 2.5em;   
+        height: 1.5em; 
+        
+    }
+    .off-toggle :global(.switch-container) {
+        font-family: 'Shippori Mincho', sans-serif;
+        font-size: 16px;
+    }
+    .off-toggle :global(.switch-thumb) {
+    width: 1.2em;   
+    height: 1.2em;
+    }
+    .off-toggle :global(.switch--slider.checked .switch-thumb) {
+        transform: translateX(1.0em); /* travel = track width - ball width - (2 * offset) */
     }
 </style>
 
@@ -86,6 +135,10 @@
 <a href="/reading" onmouseenter={()=> hoverVal = "reading"} onmouseleave={()=> hoverVal = ""}>Reading</a>
 <a href="/quiz" onmouseenter={()=> hoverVal = "quiz"} onmouseleave={()=> hoverVal = ""}>Quiz</a>
 <a href="/misc" onmouseenter={()=> hoverVal = "misc"} onmouseleave={()=> hoverVal = ""}>Misc</a>
+</div>
+
+<div class= "off-toggle" onclick={()=> off ? stopAnim() : startAnim()}> <!-- this implementation is dumb but it works so w/e -->
+    <Switch design="slider" colorScheme="red" bind:value={off} label="雨うぜぇ！"/>
 </div>
 
 
