@@ -19,7 +19,8 @@ init_db()
 def home():
     return "hey buddy i think you got the wrong door. the leather club is two blocks down."
 
-with open("chars.json", "r", encoding="utf-8") as f:
+
+with open("assets/chars.json", "r", encoding="utf-8") as f:
     chars = json.loads(f.read())
 
 @app.get("/api/home")
@@ -27,8 +28,7 @@ def homepage():
     return chars
 
 
-
-with open("deinflection.json", "r", encoding="utf-8") as f:
+with open("assets/deinflection.json", "r", encoding="utf-8") as f:
     deinflect = json.loads(f.read())
 
 @app.get("/api/lookup")
@@ -115,24 +115,55 @@ nlp = spacy.load("ja_ginza")
 @app.post("/api/text")
 def text(text: dict) -> dict:
     naiyou = text.get("text")
-    valid_attr = ["NOUN", "VERB", "ADJ", "ADV", "NUM", "PROPN", "DET", "CCONJ", "ADP", "PRON", "INTJ"] # it's prob better if i just put exceptions instead
+    # for more details refer to "assets/POS_tags.md"
+    valid_attr = ["NOUN", "VERB", "ADJ", "ADV", "NUM", "PROPN", "DET", "CCONJ", "ADP", "PRON", "INTJ", "SCONJ"] # it's prob better if i just put exceptions instead
     word_list = []
     # still flawed but decent enough for now
-    for word in nlp(naiyou):    
-        if word.pos_ in valid_attr:
-            compound = str(word)
-            for child in word.children: # x.children gives you all tokens that point to the current token as their head.
-                if child.pos_ in ["AUX", "SCONJ"]:
-                    compound += str(child)
+    tokens = list(nlp(naiyou))
+    i = 0
+    while i < len(tokens): # while instead of for loop since we want to set i = j and not get reassigned to i += 1 every iteration
+        word = tokens[i]
+        if word.pos_ in valid_attr and word.dep_ != "fixed": # words with a `fixed` dependency is processed in a different way so we filter them out (cont)
+            compound = word.text
+            j = i + 1
+            while j < len(tokens): # starts an inner loop to process i's relation to words after it
+                # (cont) an exception would be if a words's POS are these two. 
+                if tokens[j].pos_ in ["AUX", "PART"] or tokens[j].dep_ == "fixed": 
+                    compound += tokens[j].text
+                    j += 1
+                elif tokens[j].pos_ == "SCONJ":
+                    prev_morph = str(tokens[j-1].morph)
+                    print(f"SCONJ check: {tokens[j].text}, prev: {tokens[j-1].text}, morph: {prev_morph}")
+                    if "終止形" in prev_morph: # 終止形 acts as an end signal to the current j, so the current j/sconj should start as a new word (i+1)
+                        break
+                    compound += tokens[j].text # otherwise we glue it to current word (i) 例: 泣い + て
+                    j += 1
+                else:
+                    break
             if compound.strip(): # filters whitespaces of any kind (hopefully)
                 word_list.append(compound)
+            # i = j so for the next i iteration, j indexes (which has fulfilled their task in the inner loop) are skipped 
+            # so no more 泣いていた  ていた  い  duplicates
+            i = j 
+        elif word.dep_ == "fixed":
+            # glues multiple consecutive `fixed` dependendcies into one word
+            # 例: すぎ + ない = すぎない
+            compound = word.text
+            j = i + 1
+            while j < len(tokens) and tokens[j].dep_ == "fixed": # same as the first inner loop
+                compound += tokens[j].text
+                j += 1
+            word_list.append(compound)
+            i = j
+        else:
+            i += 1
     return {"words" : word_list}
 
 
-with open("kana.json", "r", encoding="utf-8") as f:
+with open("assets/kana.json", "r", encoding="utf-8") as f:
     kana_list = json.loads(f.read())
 
-with open("yojijukugo.json", "r", encoding="utf-8") as f:
+with open("assets/yojijukugo.json", "r", encoding="utf-8") as f:
     yoji = json.loads(f.read())
 
 @app.get("/api/quiz")
@@ -145,7 +176,7 @@ def kana(ji: str):
         return yoji
 
 
-with open("texts.json", "r", encoding="utf-8") as f:
+with open("assets/texts.json", "r", encoding="utf-8") as f:
     texts = json.loads(f.read())
 
 @app.get("/api/reading")

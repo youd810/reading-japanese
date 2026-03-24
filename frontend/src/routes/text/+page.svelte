@@ -25,7 +25,6 @@
             let result = await response.json(); // .json() or .text
             words = result.words
             wordcount = result.words.length    // reassign a global scope instead of fetching from a local one
-            console.log(result);
             } catch (error){
                 console.log("An error occured", error)
                 alert("An error occured")

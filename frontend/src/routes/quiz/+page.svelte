@@ -16,7 +16,6 @@
         }
         moji = await response.json()
         nextMoji()   
-        console.log(moji);
     } catch (error){
         console.log("An error occured", error);
     }}

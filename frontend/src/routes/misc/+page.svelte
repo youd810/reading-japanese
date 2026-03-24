@@ -11,5 +11,5 @@
 <a href="https://www.shugiin.go.jp/internet/itdb_annai.nsf/html/statics/shiryo/dl-constitution.htm">日本国憲法 pol hard</a> 
 <a href="https://web-japan.org/kidsweb/ja/cool/25/202508_coding_ja.html">コードを解き明かせ！日本で広がる楽しいプログラミング学習 tech ez</a> 
 <a href="https://ja.wikipedia.org/wiki/%E6%88%A6%E8%89%A6 ">戦艦 tech med</a>
-<a href="https://www.example.com">tech hard</a>
+<a href="https://www.j-platpat.inpit.go.jp/c1801/PU/JP-2000-330832/11/ja">tech hard</a>
 </div>

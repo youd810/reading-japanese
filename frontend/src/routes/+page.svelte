@@ -3,7 +3,7 @@
 <script>
     import { onMount } from "svelte";
     import Switch from "svelte-toggle-switch";
-    console.log("component mounted")
+
     let hoverVal = $state("")
 
     let letters = $state([]);
@@ -74,7 +74,6 @@
 
     function startAnim(){
         if (interval) return // this prevents interval from going haywire in case user keeps calling startanim with onclick
-
         interval = setInterval(pushChar, 1000)
         anim = requestAnimationFrame(rain)
     }
@@ -153,8 +152,6 @@
 <a href="/quiz" onmouseenter={()=> hoverVal = "quiz"} onmouseleave={()=> hoverVal = ""}>Quiz</a>
 <a href="/misc" onmouseenter={()=> hoverVal = "misc"} onmouseleave={()=> hoverVal = ""}>Misc</a>
 </div>
-
-
 
 <div class="message">
     {#if hoverVal === "text"}

@@ -54,7 +54,6 @@
         count = result.count
         clearInterval(interval)
         time = 0
-        console.log(text);
     } catch (error){
         console.log("An error occured", error);
     }}
