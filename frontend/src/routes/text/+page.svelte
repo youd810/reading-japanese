@@ -136,12 +136,12 @@
         {#each naiyou as char, i}
             <!--declare the colors to shorten the line for char-->
             {@const {bg, font} = getDictColor(i)} 
-            <span onclick={()=> getDict(naiyou.slice(i, i + 10), "en", i)} style="font-size: 18px; background-color: {bg}; color: {font}">{char}</span>
+            <span onclick={()=> getDict(naiyou.slice(i, i + 15), "en", i)} style="font-size: 18px; background-color: {bg}; color: {font}">{char}</span>
         {/each}
     {:else}
         {#each naiyou as char, i}
             {@const {bg, font} = getDictColor(i)} 
-            <span onclick={()=> getDict(naiyou.slice(i, i + 10), "jp", i)} style="font-size: 18px; background-color: {bg}; color: {font}">{char}</span>
+            <span onclick={()=> getDict(naiyou.slice(i, i + 15), "jp", i)} style="font-size: 18px; background-color: {bg}; color: {font}">{char}</span>
         {/each}
     {/if}
     {#each dict as {word, reading, definition}, i}

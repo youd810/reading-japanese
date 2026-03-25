@@ -4,6 +4,7 @@ import uvicorn
 from database import init_db, get_db
 import spacy
 import json
+import ginza
 
 app = FastAPI()
 app.add_middleware(
@@ -37,15 +38,34 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
     cursor = conn.cursor()
     pairs = [] # a list of tuples of (original, deinflect) to validate later
     candidates = []
+    deinflects = []
+    all_rules = [rule for rules in deinflect.values() for rule in rules] # deinflect = {category : rules}
+    def deinflection(words: list) -> list:
+        pass 
+    word_pre = nlp(word)
+    words = [span for span in ginza.bunsetu_spans(word_pre)]
+    #if len(words) > 10: TODO idk jsut whatever dude this is tiring i want to go home
+    #    word = words[0].text + words[1].text
+    #else:
+    word = words[0].text
+    print(f"WOOOOOOOOOOOORD: {word}")
     for i in range(len(word)):
         substring = word[:i+1]
-        all_rules = [rule for rules in deinflect.values() for rule in rules] # deinflect = {category : rules}
         for rule in all_rules:
             # each loop checks whether the current substring ends with the current deinflection rule 
             if substring.endswith(rule["in"]):
                 candidate = substring[:-len(rule["in"])] + rule["out"]
                 pairs.append((substring, candidate))
                 candidates.append(candidate)
+                deinflects.append(rule)
+    if candidates: # multi-step deinflection
+        for candidate in candidates:
+            for rule in all_rules:
+                if candidate.endswith(rule["in"]):
+                    candidate_new = candidate[:-len(rule["in"])] + rule["out"]
+                    pairs.append((candidate, candidate_new))
+                    candidates.append(candidate_new)
+                    deinflects.append(rule)
     placeholders = ','.join("?" * len(candidates))
     if dict == "jp":
     # so the way the query below works is that it will get all words from the db one by one 
@@ -80,7 +100,10 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
     result = cursor.fetchall()
     # validates so only deinflected words (pair[1]) that are actually exsist in result get in for sorting
     # (well basically to make the highlighting non-greedy)
-    valid_pairs = [pair for pair in pairs if pair[1] in [r["word"] for r in result]] 
+    valid_pairs = [pair for pair in pairs if pair[1] in [r["word"] for r in result]]
+    #for pair in pairs: 
+    #    for r in result:
+
     results = []
     for r in result:
         print(word.startswith(r["reading"]))
@@ -90,8 +113,12 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
         print(f"candidates: {candidates}, pairs: {pairs}")
         print(f"reading: '{r['reading']}', len: {len(r['reading'])}")
         print(f"startswith: {word.startswith(r['reading'])}, len check: {len(r['reading']) >= 1}")
+        print(deinflects)
         if valid_pairs:
-            length = len(max(valid_pairs, key=lambda x: len(x[0]))[0]) # 0 = original, 1 = deinflect
+            # 0 = original, 1 = deinflect
+            # also max returns whatever type you put in (in this case tuple), hence the [0] at the very end
+            # why does this work even without filtering??? nope, it only does when valid is truthy
+            length = len(max(pairs, key=lambda x: len(x[0]))[0]) 
         elif word.startswith(r["reading"]) and len(r["reading"]) >= 1:
             length = len(r["reading"])
         else:
@@ -133,7 +160,6 @@ def text(text: dict) -> dict:
                     j += 1
                 elif tokens[j].pos_ == "SCONJ":
                     prev_morph = str(tokens[j-1].morph)
-                    print(f"SCONJ check: {tokens[j].text}, prev: {tokens[j-1].text}, morph: {prev_morph}")
                     if "終止形" in prev_morph: # 終止形 acts as an end signal to the current j, so the current j/sconj should start as a new word (i+1)
                         break
                     compound += tokens[j].text # otherwise we glue it to current word (i) 例: 泣い + て
