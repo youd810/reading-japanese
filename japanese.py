@@ -5,6 +5,7 @@ from database import init_db, get_db
 import spacy
 import json
 import ginza
+import jaconv
 
 app = FastAPI()
 app.add_middleware(
@@ -36,28 +37,35 @@ with open("assets/deinflection.json", "r", encoding="utf-8") as f:
 def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
     conn = get_db()                                 # also apparently lists, string, or anything as simple only requires queries instead of req body?
     cursor = conn.cursor()
+    #if dict not in ["endict", "jpdict"]:
+    #    return ["no"]
     pairs = [] # a list of tuples of (original, deinflect) to validate later
     candidates = []
     deinflects = []
     all_rules = [rule for rules in deinflect.values() for rule in rules] # deinflect = {category : rules}
-    def deinflection(words: list) -> list:
-        pass 
-    word_pre = nlp(word)
-    words = [span for span in ginza.bunsetu_spans(word_pre)]
-    #if len(words) > 10: TODO idk jsut whatever dude this is tiring i want to go home
+    # if not all('\u4e00' <= c <= '\u9fff' for c in word[0:4]): # checks if yojijukugo, if no use nlp
+    #     word_pre = nlp(word)
+    #     words = [span for span in ginza.bunsetu_spans(word_pre)]
+    #     print(words)
+    #     word = words[0].text
+    #if len(words) > 10: TODO idk jsut whatever dude this is tiring i want to go home (TRY RECURSIVE FUNC DUMBASS (IT DOESN'T WORK SMARTASS YOU NEED A RULE LIST FIRST))
+    # WHICH MEANS REFACTORINGG THHE WHOLE THING AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
     #    word = words[0].text + words[1].text
-    #else:
-    word = words[0].text
+    
+    conv = word
+    if '\u30a1' <= word[0] <= '\u30f6': # converts katakana to hiragana
+        conv = jaconv.kata2hira(word)
     print(f"WOOOOOOOOOOOORD: {word}")
-    for i in range(len(word)):
-        substring = word[:i+1]
-        for rule in all_rules:
-            # each loop checks whether the current substring ends with the current deinflection rule 
-            if substring.endswith(rule["in"]):
-                candidate = substring[:-len(rule["in"])] + rule["out"]
-                pairs.append((substring, candidate))
-                candidates.append(candidate)
-                deinflects.append(rule)
+    for w in [word, conv]:
+        for i in range(len(w)): # first deinflection
+            substring = w[:i+1]
+            for rule in all_rules:
+                # each loop checks whether the current substring ends with the current deinflection rule 
+                if substring.endswith(rule["in"]):
+                    candidate = substring[:-len(rule["in"])] + rule["out"]
+                    pairs.append((substring, candidate))
+                    candidates.append(candidate)
+                    deinflects.append(rule)
     if candidates: # multi-step deinflection
         for candidate in candidates:
             for rule in all_rules:
@@ -75,28 +83,31 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
     # TODO: FIX DEINFLECTION AND SORTING AND HIGHLIGHING (done?　YES THEY'RE ALL DONE DON'T TOUCH THEM ANYMORE *coping*) 
         cursor.execute(f"""
             SELECT * FROM (
-            SELECT *, ? as input FROM jpdict WHERE word IN ({placeholders}) OR reading IN ({placeholders})
-            UNION ALL
-            SELECT *, ? as input FROM jpdict 
-            WHERE (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1))
+                SELECT *, ? as input FROM jpdict WHERE word IN ({placeholders}) OR reading IN ({placeholders})
+                UNION ALL
+                SELECT *, ? as input FROM jpdict 
+                WHERE (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1) 
+                OR (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1))
             ORDER BY CASE
                 WHEN input LIKE word || '%' THEN LENGTH(word)
                 ELSE LENGTH(reading)
-            END DESC""", [word] + candidates + candidates + [word, word, word]) 
+            END DESC""", [word] + candidates + candidates + [word, word, word, conv, conv])  
     # in the case of CASE, it would only get words/readings that are already filtered by WHERE
     # the logic itself is similar to WHERE with the matching stuff
     # theoretically i can merge them into 1 query with dict argument being dict name but i'm not risking it 
     else:                                                             
         cursor.execute(f"""
             SELECT * FROM (
-            SELECT *, ? as input FROM endict WHERE word IN ({placeholders}) OR reading IN ({placeholders})
-            UNION ALL
-            SELECT *, ? as input FROM endict 
-            WHERE (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1))
+                SELECT *, ? as input FROM endict WHERE word IN ({placeholders}) OR reading IN ({placeholders})
+                UNION ALL
+                SELECT *, ? as input FROM endict 
+                WHERE (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1) 
+                OR (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1))
             ORDER BY CASE
                 WHEN input LIKE word || '%' THEN LENGTH(word)
                 ELSE LENGTH(reading)
-            END DESC""", [word] + candidates + candidates + [word, word, word]) 
+            END DESC""", [word] + candidates + candidates + [word, word, word, conv, conv])  
+    print(f"{word}, {conv}") 
     result = cursor.fetchall()
     # validates so only deinflected words (pair[1]) that are actually exsist in result get in for sorting
     # (well basically to make the highlighting non-greedy)
@@ -106,20 +117,22 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
 
     results = []
     for r in result:
-        print(word.startswith(r["reading"]))
-        if word.startswith(r["reading"]):
-            print(r["reading"])
-        print(f"valid: {valid_pairs}")
-        print(f"candidates: {candidates}, pairs: {pairs}")
-        print(f"reading: '{r['reading']}', len: {len(r['reading'])}")
-        print(f"startswith: {word.startswith(r['reading'])}, len check: {len(r['reading']) >= 1}")
-        print(deinflects)
+        #print(word.startswith(r["reading"]))
+        #if word.startswith(r["reading"]):
+        #    print(r["reading"])
+        #print(f"valid: {valid_pairs}")
+        #print(f"candidates: {candidates}, pairs: {pairs}")
+        #print(f"reading: '{r['reading']}', len: {len(r['reading'])}")
+        #print(f"startswith: {word.startswith(r['reading'])}, len check: {len(r['reading']) >= 1}")
+        #print(deinflects)
         if valid_pairs:
             # 0 = original, 1 = deinflect
             # also max returns whatever type you put in (in this case tuple), hence the [0] at the very end
             # why does this work even without filtering??? nope, it only does when valid is truthy
-            length = len(max(pairs, key=lambda x: len(x[0]))[0]) 
+            length = len(max(valid_pairs, key=lambda x: len(x[0]))[0]) 
         elif word.startswith(r["reading"]) and len(r["reading"]) >= 1:
+            length = len(r["reading"])
+        elif conv.startswith(r["reading"]) and len(r["reading"]) >= 1:
             length = len(r["reading"])
         else:
             length = len(r["word"])
