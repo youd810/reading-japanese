@@ -33,6 +33,7 @@ def homepage():
 with open("assets/deinflection.json", "r", encoding="utf-8") as f:
     deinflect = json.loads(f.read())
 
+# TODO: restore rules, look for raw word first, if none then deiflect (label them with their rule also). query with said rule. 
 @app.get("/api/lookup")
 def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
     conn = get_db()                                 # also apparently lists, string, or anything as simple only requires queries instead of req body?
@@ -51,29 +52,33 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
     #if len(words) > 10: TODO idk jsut whatever dude this is tiring i want to go home (TRY RECURSIVE FUNC DUMBASS (IT DOESN'T WORK SMARTASS YOU NEED A RULE LIST FIRST))
     # WHICH MEANS REFACTORINGG THHE WHOLE THING AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
     #    word = words[0].text + words[1].text
-    
+    # TODO : TEXT PADDING FOR /text
     conv = word
     if '\u30a1' <= word[0] <= '\u30f6': # converts katakana to hiragana
         conv = jaconv.kata2hira(word)
     print(f"WOOOOOOOOOOOORD: {word}")
     for w in [word, conv]:
         for i in range(len(w)): # first deinflection
+            if i == 0:
+                continue
             substring = w[:i+1]
             for rule in all_rules:
+                #candidates.append((candidate, rule["rulesOut"]))
                 # each loop checks whether the current substring ends with the current deinflection rule 
-                if substring.endswith(rule["in"]):
-                    candidate = substring[:-len(rule["in"])] + rule["out"]
-                    pairs.append((substring, candidate))
+                if substring.endswith(rule["kanaIn"]):
+                    candidate = substring[:-len(rule["kanaIn"])] + rule["kanaOut"]
+                    pairs.append((substring, candidate, rule["rulesOut"]))
                     candidates.append(candidate)
                     deinflects.append(rule)
     if candidates: # multi-step deinflection
         for candidate in candidates:
             for rule in all_rules:
-                if candidate.endswith(rule["in"]):
-                    candidate_new = candidate[:-len(rule["in"])] + rule["out"]
-                    pairs.append((candidate, candidate_new))
-                    candidates.append(candidate_new)
-                    deinflects.append(rule)
+                if candidate.endswith(rule["kanaIn"]):
+                    candidate_new = candidate[0][:-len(rule["kanaIn"])] + rule["kanaOut"]
+                    if candidate_new not in [candidate[0] for candidate in candidates]:
+                        pairs.append((candidate, candidate_new, rule["rulesOut"]))
+                        candidates.append(candidate_new)
+                        deinflects.append(rule)
     placeholders = ','.join("?" * len(candidates))
     if dict == "jp":
     # so the way the query below works is that it will get all words from the db one by one 
@@ -81,6 +86,9 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
     # for example does the pattern 民主% match 民主主義？ (or vice versa) 
     # the parentheses at the start are important to wrap the results of the two selects into one, otherwise it will return an error 
     # TODO: FIX DEINFLECTION AND SORTING AND HIGHLIGHING (done?　YES THEY'RE ALL DONE DON'T TOUCH THEM ANYMORE *coping*) 
+    # ) AND (rule IN ({placeholders}))
+    # + [str(candidate[1]) for candidate in candidates]
+        print(f"asd: {word}")
         cursor.execute(f"""
             SELECT * FROM (
                 SELECT *, ? as input FROM jpdict WHERE word IN ({placeholders}) OR reading IN ({placeholders})
@@ -88,10 +96,14 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
                 SELECT *, ? as input FROM jpdict 
                 WHERE (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1) 
                 OR (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1))
-            ORDER BY CASE
-                WHEN input LIKE word || '%' THEN LENGTH(word)
-                ELSE LENGTH(reading)
-            END DESC""", [word] + candidates + candidates + [word, word, word, conv, conv])  
+            ORDER BY 
+                CASE
+                    WHEN input LIKE word || '%' THEN LENGTH(word)
+                    ELSE LENGTH(reading)
+                END DESC,
+                CASE WHEN input LIKE word || '%' OR input LIKE reading || '%' THEN 1 ELSE 0 END DESC,
+                LENGTH(word) DESC,
+                word ASC""", [word]  + candidates + candidates + [word, word, word, conv, conv])  
     # in the case of CASE, it would only get words/readings that are already filtered by WHERE
     # the logic itself is similar to WHERE with the matching stuff
     # theoretically i can merge them into 1 query with dict argument being dict name but i'm not risking it 
@@ -106,7 +118,8 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
             ORDER BY CASE
                 WHEN input LIKE word || '%' THEN LENGTH(word)
                 ELSE LENGTH(reading)
-            END DESC""", [word] + candidates + candidates + [word, word, word, conv, conv])  
+            END DESC,
+            word ASC""", [word] + candidates + candidates + [word, word, word, conv, conv])  
     print(f"{word}, {conv}") 
     result = cursor.fetchall()
     # validates so only deinflected words (pair[1]) that are actually exsist in result get in for sorting
@@ -121,7 +134,7 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
         #if word.startswith(r["reading"]):
         #    print(r["reading"])
         #print(f"valid: {valid_pairs}")
-        #print(f"candidates: {candidates}, pairs: {pairs}")
+        print(f"candidates: {candidates}, pairs: {pairs}")
         #print(f"reading: '{r['reading']}', len: {len(r['reading'])}")
         #print(f"startswith: {word.startswith(r['reading'])}, len check: {len(r['reading']) >= 1}")
         #print(deinflects)
@@ -139,12 +152,20 @@ def lookup(word: str, dict: str = "en") -> list:    # "en" is the default arg
         # since it's a json string by default i need to parse the def back as a python object
         # well it's because i didn't set ensure_ascii to True when dumping them into the database  
         # which turned the letters into unicode bytes 
-        results.append({
-            "word" : r["word"],
-            "reading" : r["reading"],
-            "definition" : json.loads(r["definition"]),
-            "len" : length                 
-        })                                            
+        for pair in pairs:
+            for rule in pair[2]:
+                cursor.execute("""
+                    SELECT * FROM jpdict
+                    WHERE (word = ? OR reading = ?) AND rule = ?
+                """, [pair[1], pair[1], rule])
+                for r in cursor.fetchall():
+                    results.append({
+                        "word": r["word"],
+                        "reading": r["reading"],
+                        "definition": json.loads(r["definition"]),
+                        "len": length
+                    })
+                                            
     conn.close()
     return results                                    
 

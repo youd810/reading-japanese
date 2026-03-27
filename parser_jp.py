@@ -12,18 +12,22 @@ folder = os.getenv("JP_FOLDER")
 
 with open(os.path.join(folder, "term_bank_1.json"), "r", encoding="utf-8") as f:
     entries = json.loads(f.read())
+    entryno = 0
     for entry in entries:
+        entryno += 1
         word = entry[0]
         reading = entry[1]
         definition = entry[5]
+        rule = entry[3]
+        score = entry[4]
         def_temp = [] # no need to empty with .clear() since it gets reassigned every loop
         for d in definition:
             n = d.find("\n")
             def_temp.append(d[n+1:].strip()) # `\n` only has 1 len
         cursor.execute("""
-            INSERT INTO jpdict(word, reading, definition)
-            VALUES (?, ?, ?)""", (word, reading, json.dumps(def_temp)))
-        print(f"entry: {word}")
+            INSERT INTO jpdict(word, reading, definition, rule, score)
+            VALUES (?, ?, ?, ?, ?)""", (word, reading, json.dumps(def_temp), rule, score))
+        print(f"entry: {word}  entry no: {[entryno]}")
 conn.commit()
 conn.close()
 print("done")
