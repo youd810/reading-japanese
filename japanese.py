@@ -65,6 +65,7 @@ def deinflect_word(source):
             for kana_in, kana_out, rules_in, rules_out in variants:
                 # checks if two overlapping rules exist to filter out rules_in that don't match (even if reason is the exact same)
                 # 例: adj-i (item rules) can only match with adj-i (rules in) and so on
+                # but if item has no rule (i.e. not yet deinflected) we let it in
                 # also combining these 3 cond into if true might be spaghetti so i'll leave them be for now  
                 if item["rules"] and (not item["rules"] & rules_in): 
                     continue
@@ -81,8 +82,6 @@ def deinflect_word(source):
         i += 1
     return results
 
-
-# TODO: restore rules, look for raw word first, if none then deiflect (label them with their rule also). query with said rule. 
 @app.get("/api/lookup")
 def lookup(word: str, dict: str = "en") -> list:
     #if dict not in ["endict", "jpdict"]: # this should prevent sql injections (hopefully)
@@ -96,7 +95,6 @@ def lookup(word: str, dict: str = "en") -> list:
     for w in [word, conv]:
         for i in range(1, len(w)): # first deinflection, skips i = 0 to reduce noises
             substring = w[:i+1]
-            print(f"sub: {substring}")
             # sends substring of incremental len to deinflect
             # putting this in here for now, might move later
             for d in deinflect_word(substring): 
@@ -148,26 +146,25 @@ def lookup(word: str, dict: str = "en") -> list:
     result = cursor.fetchall()
     results = []
     for r in result:
-        # this prevents noises to get appended 例: filtering out 乞い from word param こさ
+        # this prevents noises to get appended 例: filtering out 乞い from word param こさ (cont)
         is_direct = (word.startswith(r["word"]) or word.startswith(r["reading"]) or conv.startswith(r["reading"]))
         # these are for the highlighting
         # basically finds the longest possible string of valid chars 
         matching_deinflect = None
         matching_deinflects = [
             d for d in deinflects
-            if (r["word"] == d["word"] or r["reading"] == d["word"]) # checks if d exists in result
+            if (r["word"] == d["word"] or r["reading"] == d["word"]) # checks if d exists in result, or rather the other way around
             and (not d["rules"] or r["rule"] in d["rules"])  # checks if d has rule or one of its rules matches with r's
         ]
         if matching_deinflects:
             matching_deinflect = max(matching_deinflects, key=lambda x: len(x["original"])) # original refers to the pre-inflected word
+        # (cont) and 濃い gets appended because it's in matching_deinflects
         if not is_direct and not matching_deinflects:
             continue
         if matching_deinflect:
             length = len(matching_deinflect["original"])
-        elif word.startswith(r["reading"]) and len(r["reading"]) >= 1:
-            length = len(r["reading"])
-        elif conv.startswith(r["reading"]) and len(r["reading"]) >= 1:
-            length = len(r["reading"])
+        elif (word.startswith(r["reading"]) and len(r["reading"]) >= 1) or (conv.startswith(r["reading"]) and len(r["reading"]) >= 1):
+            length = len(r["reading"])  
         else:
             length = len(r["word"])
         # since it's a json string by default i need to parse the def back as a python object

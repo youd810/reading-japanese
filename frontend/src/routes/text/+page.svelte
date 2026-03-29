@@ -110,14 +110,18 @@
 <Switch colorScheme="red" size="sm" bind:value={lValue} design="multi" options={["English", "Japanese"]} label="Language options" />
 {/if}
 <br>
+
+<div class="text-box">
 {#if textValue === "highlight"}
     {#if hlValue === "word"}
-        {#each words as word, i}
-            <!--`span` for iterating elements without a newline-->
-            <span style="font-size: 18px; background-color: {colors[i%colors.length]}">{word}</span>
-        {/each}
+
+            {#each words as word, i}
+                <!--`span` for iterating elements without a newline-->
+                <span style="background-color: {colors[i%colors.length]}">{word}</span>
+            {/each}
+        
     {:else if hlValue == "char"}
-        <p>
+        <p style="font-size: 18px;">
             <span style="background-color: {charColors["hiragana"]};">あ</span> Hiragana 
             <span style="background-color: {charColors["katakana"]};">ア</span> Katakana 
             <span style="background-color: {charColors["kanji"]};">亜</span> Kanji 
@@ -126,7 +130,7 @@
         
         {#each naiyou as char}
             <!--call the getCharType with char as arg first then what it returns will become the key-->
-            <span style="font-size: 18px; background-color: {charColors[getCharType(char)]}">{char}</span>
+            <span style="background-color: {charColors[getCharType(char)]}">{char}</span>
         {/each}
     {/if}
 <!-- dict mode -->
@@ -136,12 +140,12 @@
         {#each naiyou as char, i}
             <!--declare the colors to shorten the line for char-->
             {@const {bg, font} = getDictColor(i)} 
-            <span onclick={()=> getDict(naiyou.slice(i, i + 15), "en", i)} style="font-size: 18px; background-color: {bg}; color: {font}">{char}</span>
+            <span onclick={()=> getDict(naiyou.slice(i, i + 15), "en", i)} style="background-color: {bg}; color: {font}">{char}</span>
         {/each}
     {:else}
         {#each naiyou as char, i}
             {@const {bg, font} = getDictColor(i)} 
-            <span onclick={()=> getDict(naiyou.slice(i, i + 15), "jp", i)} style="font-size: 18px; background-color: {bg}; color: {font}">{char}</span>
+            <span onclick={()=> getDict(naiyou.slice(i, i + 15), "jp", i)} style="background-color: {bg}; color: {font}">{char}</span>
         {/each}
     {/if}
     {#each dict as {word, reading, definition}, i}
@@ -152,3 +156,4 @@
         </p>
     {/each}
 {/if}
+</div>

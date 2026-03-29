@@ -1,0 +1,1 @@
+export const animState = $state({ off: false }) // used by homepage and layout

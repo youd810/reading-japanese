@@ -3,6 +3,7 @@
 <script>
     import { onMount } from "svelte";
     import Switch from "svelte-toggle-switch";
+    import { animState } from "$lib/stores/offswitch.svelte";
 
     let hoverVal = $state("")
 
@@ -11,7 +12,7 @@
     let canvas;
     let ctx;
     let anim;
-    let off = $state();
+    // let off = $derived(animState.off) // $derived works so why bother with $effect? I was wrong
     
 
     async function getChars() {
@@ -78,12 +79,22 @@
         anim = requestAnimationFrame(rain)
     }
 
+    $effect(() => {
+        if (animState.off) {
+            stopAnim()
+        } else {
+            if (ctx) { // prevents running startanim before ctx is defined in onmount
+            startAnim()
+            }
+        }
+    })
+
     function handleVisibility() {
         if (document.hidden) { // pauses the animation when in other tabs to save on performance
             cancelAnimationFrame(anim)
             clearInterval(interval)
             interval = 0
-        } else if (!document.hidden && !off) {
+        } else if (!document.hidden && !animState.off) {
             startAnim()
         }
     }
@@ -108,41 +119,16 @@
         }
     })
 
-
 </script>
 
 <style>
     :global(body) {
         overflow-x: hidden;
     }
-    .off-toggle{ /* put these (not this one in particular) in here because toggle switch is an external lib and needs to be imported */
-	position: fixed;
-	bottom: 2%;
-	left: 2%
-    }
-    .off-toggle :global(.switch--slider) {
-        width: 2.5em;   
-        height: 1.5em; 
-        
-    }
-    .off-toggle :global(.switch-container) {
-        font-family: 'Shippori Mincho', sans-serif;
-        font-size: 16px;
-    }
-    .off-toggle :global(.switch-thumb) {
-    width: 1.2em;   
-    height: 1.2em;
-    }
-    .off-toggle :global(.switch--slider.checked .switch-thumb) {
-        transform: translateX(1.0em); /* travel = track width - ball width - (2 * offset) */
-    }
 </style>
 
 <canvas bind:this={canvas}></canvas> <!-- set up the canvas first before everything else -->
 
-<div class= "off-toggle" onclick={()=> off ? stopAnim() : startAnim()}> <!-- this implementation is dumb but it works so w/e -->
-    <Switch design="slider" colorScheme="red" bind:value={off} label="雨うぜぇ！"/>
-</div>
 
 <div class="homepage">
 <h1>Welcome!</h1>
@@ -164,5 +150,4 @@
         <span>Other stuff</span>
     {/if}
 </div>
-
 
