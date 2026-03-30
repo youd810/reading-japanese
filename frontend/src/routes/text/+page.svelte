@@ -66,7 +66,7 @@
         clearTimeout(timerdict)         
         timerdict = setTimeout(async () => {   
             try{
-            let response = await fetch(`http://localhost:8008/api/lookup?word=${chars}&dict=${lang}`);
+            let response = await fetch(`http://localhost:8008/api/lookup?word=${chars}&lang=${lang}`);
             if (!response.ok) {
                 throw new Error(`HTTP Error: ${response.status}`);
             }

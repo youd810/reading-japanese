@@ -19,6 +19,7 @@ def init_db():
     )""")
     # index for assingning each word to its own index and make it easier to look up
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_endict_word ON endict(word);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_endict_reading ON endict(reading);")
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS jpdict(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -29,6 +30,7 @@ def init_db():
             score INTEGER
     )""")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_jpdict_word ON jpdict(word);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_jpdict_reading ON jpdict(reading);")
     conn.commit()
     conn.close()
 

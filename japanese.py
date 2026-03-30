@@ -83,9 +83,11 @@ def deinflect_word(source):
     return results
 
 @app.get("/api/lookup")
-def lookup(word: str, dict: str = "en") -> list:
-    #if dict not in ["endict", "jpdict"]: # this should prevent sql injections (hopefully)
-    #    return ["ないです"] TODO: implement these later, or not
+def lookup(word: str, lang: str = "en") -> list: # TODO: FIX QUERY PERFOMANCE ISSUE CLEAN UP THE TIMESTAMPS AFTER
+    tables = {"en": "endict", "jp": "jpdict"}
+    table = tables[lang]
+    if lang not in tables: # this should prevent sql injections (hopefully)
+        return ["ないです"] 
     conn = get_db()                                 
     cursor = conn.cursor()
     deinflects = []
@@ -95,7 +97,7 @@ def lookup(word: str, dict: str = "en") -> list:
     for w in [word, conv]:
         for i in range(1, len(w)): # first deinflection, skips i = 0 to reduce noises
             substring = w[:i+1]
-            # sends substring of incremental len to deinflect
+            # sends substrings of incremental len to deinflect
             # putting this in here for now, might move later
             for d in deinflect_word(substring): 
                 if d["word"] != substring: # this just ensures word doesn't duplicate with word param in the query later
@@ -105,44 +107,29 @@ def lookup(word: str, dict: str = "en") -> list:
                         "rules" : d["rules"] 
                     })
     candidates = [d["word"] for d in deinflects]
+    candidates = list(dict.fromkeys(candidates)) # deduplicates candidates to improve query time
     placeholders = ','.join("?" * len(candidates))
-    if dict == "jp":
     # so the way the query below works is that it will get all words from the db one by one 
     # and check if the pattern word+% match `?`
     # for example does the pattern 民主% match 民主主義？ (or vice versa) 
     # the parentheses at the start are important to wrap the results of the two selects into one, otherwise it will return an error 
-    # TODO: FIX DEINFLECTION AND SORTING AND HIGHLIGHING (done?　YES THEY'RE ALL DONE DON'T TOUCH THEM ANYMORE *coping*) 
-        cursor.execute(f"""
-            SELECT * FROM (
-                SELECT *, ? as input FROM jpdict WHERE word IN ({placeholders}) OR reading IN ({placeholders})
-                UNION ALL
-                SELECT *, ? as input FROM jpdict 
-                WHERE (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1) 
-                OR (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1))
-            ORDER BY 
-                CASE
-                    WHEN input LIKE word || '%' THEN LENGTH(word)
-                    ELSE LENGTH(reading)
-                END DESC,
-                CASE WHEN input LIKE word || '%' OR input LIKE reading || '%' THEN 1 ELSE 0 END DESC,
-                LENGTH(word) DESC,
-                word ASC""", [word] + candidates + candidates + [word, word, word, conv, conv])  
-    # in the case of CASE, it would only get words/readings that are already filtered by WHERE
-    # the logic itself is similar to WHERE with the matching stuff
-    # theoretically i can merge them into 1 query with dict argument being dict name but i'm not risking it 
-    else:                                                             
-        cursor.execute(f"""
-            SELECT * FROM (
-                SELECT *, ? as input FROM endict WHERE word IN ({placeholders}) OR reading IN ({placeholders})
-                UNION ALL
-                SELECT *, ? as input FROM endict 
-                WHERE (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1) 
-                OR (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1))
-            ORDER BY CASE
+    cursor.execute(f"""
+        SELECT * FROM (
+            SELECT *, ? as input FROM {table} WHERE word IN ({placeholders}) OR reading IN ({placeholders})
+            UNION ALL
+            SELECT *, ? as input FROM {table} 
+            WHERE (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1) 
+            OR (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1))
+        ORDER BY 
+            CASE
                 WHEN input LIKE word || '%' THEN LENGTH(word)
                 ELSE LENGTH(reading)
             END DESC,
+            CASE WHEN input LIKE word || '%' OR input LIKE reading || '%' THEN 1 ELSE 0 END DESC,
+            LENGTH(word) DESC,
             word ASC""", [word] + candidates + candidates + [word, word, word, conv, conv])  
+    # in the case of CASE, it would only get words/readings that are already filtered by WHERE
+    # the logic itself is similar to WHERE with the matching stuff
     result = cursor.fetchall()
     results = []
     for r in result:
@@ -175,12 +162,13 @@ def lookup(word: str, dict: str = "en") -> list:
             "reading": r["reading"],
             "definition": json.loads(r["definition"]),
             "len": length
-        })          
+        })   
+    print(candidates)
+    print(len(candidates))     
     conn.close()
     return results                                    
 
 
-# imagine having to resort to using nlp lib just to make a word counter lmao
 nlp = spacy.load("ja_ginza")
 
 @app.post("/api/text")
