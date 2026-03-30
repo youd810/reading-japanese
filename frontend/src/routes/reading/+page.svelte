@@ -32,7 +32,7 @@
     let start = $state(false)
     let text = $state("")
     let count = $state()
-    let cpm =  $derived((count / time)*6000)  // 60 for s, 600 for ds, 60000 for ms
+    let cpm =  $derived(count / (time / 6000))  // 60 for s, 600 for ds, 60000 for ms
 
     // auto scroll for cpm/reset button
     let resultEle
@@ -81,6 +81,24 @@
     {/if}
 </div>
 
+<details>
+    <summary style="padding-bottom: 0px;">
+        Readme
+    </summary>
+    <p style="font-size: 16px; padding-left: 20px;  line-height: 1.5">
+        Speed is measured in characters per minute (CPM).
+    </p>
+    <p style="font-size: 16px; padding-left: 20px;  line-height: 1.7">
+        For reference:<br>   
+        - Slow: &lt;300 CPM<br>
+        - Below Average: 300-400 CPM<br>
+        - Average: 400-600 CPM<br>
+        - Above Average: 600-800 CPM<br>
+        - Fast: &gt;800 CPM<br>
+        - Speed Reading: &gt;2000 CPM
+    </p>
+</details>
+
 <Switch colorScheme="red" size="sm" bind:value={fieldValue} design="multi" options={["Literature", "Politics", "Technology"]} label="Field" rounded="true"/>
 <Switch colorScheme="red" size="sm" bind:value={diffValue} design="multi" options={["Easy", "Medium", "Hard"]} label="Difficulty"/>
 
@@ -97,7 +115,7 @@
 
     <div bind:this={resultEle}>
         {#if show && time}
-            <p style="display: flex; flex-direction: column; align-items: center">Your cpm is: {Math.round(cpm)}</p>
+            <p style="display: flex; flex-direction: column; align-items: center">Your CPM is: {Math.round(cpm)}</p>
             <button class="button-timer" onclick={()=> time = 0}>Reset</button>
         {/if}
     </div>

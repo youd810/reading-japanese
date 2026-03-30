@@ -73,7 +73,7 @@
         interval = 0 // set interval to false for a check
     }
 
-    async function startAnim(){
+    function startAnim(){
         if (interval) return // this prevents interval from going haywire in case user keeps calling startanim with onclick
         interval = setInterval(pushChar, 1000)
         anim = requestAnimationFrame(rain)

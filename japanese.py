@@ -85,9 +85,9 @@ def deinflect_word(source):
 @app.get("/api/lookup")
 def lookup(word: str, lang: str = "en") -> list: # TODO: FIX QUERY PERFOMANCE ISSUE CLEAN UP THE TIMESTAMPS AFTER
     tables = {"en": "endict", "jp": "jpdict"}
-    table = tables[lang]
     if lang not in tables: # this should prevent sql injections (hopefully)
         return ["ないです"] 
+    table = tables[lang]
     conn = get_db()                                 
     cursor = conn.cursor()
     deinflects = []
