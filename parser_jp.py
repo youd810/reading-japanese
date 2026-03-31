@@ -1,33 +1,33 @@
 import os
 import json
+import psycopg2
+from psycopg2.extras import execute_values
 from dotenv import load_dotenv
-from database import get_db, init_db
-
-init_db()
-conn = get_db()
-cursor = conn.cursor()
 
 load_dotenv()
+conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+cursor = conn.cursor()
+
 folder = os.getenv("JP_FOLDER")
 
 with open(os.path.join(folder, "term_bank_1.json"), "r", encoding="utf-8") as f:
     entries = json.loads(f.read())
-    entryno = 0
+    rows = []
     for entry in entries:
-        entryno += 1
         word = entry[0]
         reading = entry[1]
         definition = entry[5]
         rule = entry[3]
         score = entry[4]
-        def_temp = [] # no need to empty with .clear() since it gets reassigned every loop
+        def_temp = []
         for d in definition:
             n = d.find("\n")
-            def_temp.append(d[n+1:].strip()) # `\n` only has 1 len
-        cursor.execute("""
-            INSERT INTO jpdict(word, reading, definition, rule, score)
-            VALUES (?, ?, ?, ?, ?)""", (word, reading, json.dumps(def_temp), rule, score))
-        print(f"entry: {word}  entry no: {[entryno]}")
+            def_temp.append(d[n+1:].strip())
+        rows.append((word, reading, json.dumps(def_temp), rule, score))
+    execute_values(cursor, """
+        INSERT INTO jpdict(word, reading, definition, rule, score)
+        VALUES %s""", rows)
+    print(f"entry: {word}, {len(rows)} entries added")
 conn.commit()
 conn.close()
 print("done")

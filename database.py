@@ -1,8 +1,14 @@
-import sqlite3
+import psycopg2
+import psycopg2.extras
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 def get_db():
-    conn = sqlite3.connect("database.db")
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(DATABASE_URL)
+    conn.cursor_factory = psycopg2.extras.RealDictCursor  #  postgres version of row_factory
     return conn
 
 def init_db():
@@ -10,27 +16,24 @@ def init_db():
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS endict(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
             word TEXT,
             reading TEXT,
             definition TEXT,
             rule TEXT,
             score INTEGER
-    )""")
-    # index for assingning each word to its own index and make it easier to look up
+        )""")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_endict_word ON endict(word);")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_endict_reading ON endict(reading);")
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS jpdict(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
             word TEXT,
             reading TEXT,
             definition TEXT,
             rule TEXT,
             score INTEGER
-    )""")
+        )""")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_jpdict_word ON jpdict(word);")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_jpdict_reading ON jpdict(reading);")
     conn.commit()
     conn.close()
-
+    

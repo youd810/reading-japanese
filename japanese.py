@@ -43,12 +43,6 @@ def convert_to_sets(reasons_data):
                 set(rule["rulesOut"])
             ))
         converted.append((reason, variants))
-        # format example
-        # ("past", [
-        #   ("った", "う", {'v5'}, set()),
-        #   "た", "る", {'v1'}, set()),
-        #   etc
-        #  ])
     return converted
 
 with open("assets/deinflection.json", "r", encoding="utf-8") as f:
@@ -111,28 +105,29 @@ def lookup(word: str, lang: str = "en") -> list: # TODO: FIX QUERY PERFOMANCE IS
     print(f"post deincflect: {datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")}")
     candidates = [d["word"] for d in deinflects]
     candidates = list(dict.fromkeys(candidates)) # deduplicates candidates to improve query time
-    placeholders = ','.join("?" * len(candidates))
+    placeholders = ','.join(["%s"] * len(candidates)) # list to prevent "%" and "s" from concacenating
     # so the way the query below works is that it will get all words from the db one by one 
-    # and check if the pattern word+% match `?`
-    # for example does the pattern 民主% match 民主主義？ (or vice versa) 
+    # and check if the pattern word+%% match `?`
+    # for example does the pattern 民主%% match 民主主義？ (or vice versa) 
     # the parentheses at the start are important to wrap the results of the two selects into one, otherwise it will return an error 
     cursor.execute(f"""
         SELECT * FROM (
-            SELECT *, ? as input FROM {table} WHERE word IN ({placeholders}) OR reading IN ({placeholders})
+            SELECT *, %s as input FROM {table} WHERE word IN ({placeholders}) OR reading IN ({placeholders})
             UNION ALL
-            SELECT *, ? as input FROM {table} 
-            WHERE (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1) 
-            OR (? LIKE word || '%') OR (? LIKE reading || '%' AND LENGTH(reading) >= 1))
-        ORDER BY 
+            SELECT *, %s as input FROM {table}
+            WHERE (%s LIKE word || '%%') OR (%s LIKE reading || '%%' AND LENGTH(reading) >= 1)
+            OR (%s LIKE word || '%%') OR (%s LIKE reading || '%%' AND LENGTH(reading) >= 1))
+        ORDER BY
             CASE
-                WHEN input LIKE word || '%' THEN LENGTH(word)
+                WHEN input LIKE word || '%%' THEN LENGTH(word)
                 ELSE LENGTH(reading)
             END DESC,
-            CASE WHEN input LIKE word || '%' OR input LIKE reading || '%' THEN 1 ELSE 0 END DESC,
+            CASE WHEN input LIKE word || '%%' OR input LIKE reading || '%%' THEN 1 ELSE 0 END DESC,
             LENGTH(word) DESC,
-            word ASC""", [word] + candidates + candidates + [word, word, word, conv, conv])  
+            word ASC""", [word] + candidates + candidates + [word, word, word, conv, conv])
     # in the case of CASE, it would only get words/readings that are already filtered by WHERE
     # the logic itself is similar to WHERE with the matching stuff
+    # slqite to postgres: '?' -> '%s', '%' -> '%%'
     result = cursor.fetchall()
     results = []
     print(f"post query: {datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")}")
@@ -248,17 +243,7 @@ def reading(field: str = "literature", diff: str = "easy") -> dict:
     # if i assign the result in a var it works, but not with returning the result directly??
     result = texts[field.lower()][diff.lower()]
     return result
-    # below is an example of what will happen otherwise
-#   if field == "lit":
-#       text = texts["literature"]
-#       if diff == "e":
-#           return {"text" : text["easy"]["text"], "count" : text["easy"]["count"]}
-#       elif diff == "m":
-#           return texts["literature"]["medium"]["text"]
-#       elif diff == "h":
-#           return texts["literature"]["hard"]["text"]
-#   elif field == "pol":
-#       ...
+
 
 if __name__ == "__main__":
     uvicorn.run("japanese:app", host="0.0.0.0", port=8008, reload=True) # reload for debugging

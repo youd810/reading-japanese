@@ -1,38 +1,28 @@
 import os
 import json
+import psycopg2
 from dotenv import load_dotenv
-from database import get_db, init_db
-
-init_db()
-conn = get_db()
-cursor = conn.cursor()
 
 load_dotenv()
+conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+cursor = conn.cursor()
+
 folder = os.getenv("EN_FOLDER")
 
-files = [f for f in os.listdir(folder) if f.startswith("term")] # filter first then sort
-for file in sorted(files, key=lambda x: int(x.split("_")[2].split(".")[0])): # sorted() for sorting the filename first     
-    word_list = []                                                           # step: term_bank_10.json > 10.json > 10 > int(10)
-    reading_list = []
-    definition_list = []
-    rule_list = []
-    score_list = []
-    with open(os.path.join(folder, file), "r", encoding="utf-8") as f: #path.join() if the script is in different loc from the file it wants to open
-        entries = json.loads(f.read()) #json.load() (or loads, whatever the difference is) to load json files, otherwise everything will turn into a string
-        for entry in entries:          # json.load() reads from a file object while json.loads() reads from a string
+files = [f for f in os.listdir(folder) if f.startswith("term")]
+for file in sorted(files, key=lambda x: int(x.split("_")[2].split(".")[0])):
+    with open(os.path.join(folder, file), "r", encoding="utf-8") as f:
+        entries = json.loads(f.read())
+        for entry in entries:
             if entry[1] == "":
                 continue
-            word_list.append(entry[0])
-            reading_list.append(entry[1])
-            definition_list.append(entry[5])
-            rule_list.append(entry[3])
-            score_list.append(entry[4])
-        for i in range(len(word_list)):
-            cursor.execute("""
+            # it's painfully slow without batch execute. don't do this
+            cursor.execute(""" 
                 INSERT INTO endict(word, reading, definition, rule, score)
-                VALUES (?, ?, ?, ?, ?)""", (word_list[i], reading_list[i], json.dumps(definition_list[i]), rule_list[i], score_list[i])) #dumps to turn them into json cuz tuple doesn't work with columns
-            print(f"file: {file}, entry: {word_list[i]}, entry no: {[i]}")
-    print(f"{file} comlpleted")
+                VALUES (%s, %s, %s, %s, %s)""",
+                (entry[0], entry[1], json.dumps(entry[5]), entry[3], entry[4]))
+            print(f"file: {file}, entry: {entry[0]}")
+    print(f"{file} completed")
 conn.commit()
 conn.close()
 print("done")
