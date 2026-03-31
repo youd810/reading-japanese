@@ -12,7 +12,6 @@
     let canvas;
     let ctx;
     let anim;
-    // let off = $derived(animState.off) // $derived works so why bother with $effect? I was wrong
     
 
     async function getChars() {
@@ -84,7 +83,7 @@
             stopAnim()
         } else {
             if (ctx) { // prevents running startanim before ctx is defined in onmount
-            startAnim()
+                startAnim()
             }
         }
     })

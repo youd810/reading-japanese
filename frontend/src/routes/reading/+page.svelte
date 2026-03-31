@@ -45,18 +45,19 @@
     // text logic
     async function getText(field, diff) {
         try{
-        let response = await fetch(`http://localhost:8008/api/reading?field=${field}&diff=${diff}`);
-        if (!response.ok) {
-            throw new Error(`HTTP Error: ${response.status}`);
+            let response = await fetch(`http://localhost:8008/api/reading?field=${field}&diff=${diff}`);
+            if (!response.ok) {
+                throw new Error(`HTTP Error: ${response.status}`);
+            }
+            let result = await response.json()
+            text = result.text
+            count = result.count
+            clearInterval(interval)
+            time = 0
+        } catch (error){
+            console.log("An error occured", error);
         }
-        let result = await response.json()
-        text = result.text
-        count = result.count
-        clearInterval(interval)
-        time = 0
-    } catch (error){
-        console.log("An error occured", error);
-    }}
+    }
 
     // note to self: $effect runs when any reactive state it reads changes
     // so this will run whenever fieldValue or diffValue changes

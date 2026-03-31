@@ -1,7 +1,7 @@
 <title>Text</title>
 <script>
     import Switch from 'svelte-toggle-switch'
-
+    
     // word counter and text highlighting logic 
 
     let naiyou = $state("")         // debounce simplified ver: 
@@ -60,12 +60,10 @@
     other: colors[3] // green
     }
 
-    // for the mouse hover logic
-    let timerdict;
-    function getDict(chars, lang, i) {
-        clearTimeout(timerdict)         
-        timerdict = setTimeout(async () => {   
-            try{
+    // dict logic
+    async function getDict(chars, lang, i) { 
+        try{
+            status = "active"
             let response = await fetch(`http://localhost:8008/api/lookup?word=${chars}&lang=${lang}`);
             if (!response.ok) {
                 throw new Error(`HTTP Error: ${response.status}`);
@@ -73,14 +71,14 @@
             let result = await response.json(); 
             dict = result
             index = i
+            status = "done"
             console.log(result);
-            } catch (error){
+        } catch (error){
             console.log("An error occured", error)
             alert("An error occured")
-            }
-        }, 0) // the timer is useless with mouse click but I can't be bothered to dismantle the whole thing
+        }      
     }
-    
+    let status = $state("")	
     let dict = $state([])
     let index = $state()
     // the longest len (can be either from reading or word) in the dict (index 0 because it's the longest from sorting in the backend), default value is 0
@@ -95,6 +93,10 @@
     }
     
 </script>
+
+{#if status}
+    <div class="loading-bar {status}" onanimationend={()=> {if (status === "done") status = ""}}></div>
+{/if}
 
 <br>
 <textarea bind:value={naiyou} oninput={sendText} placeholder="Input or paste your text here"></textarea>

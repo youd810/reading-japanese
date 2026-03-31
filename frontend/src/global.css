@@ -29,7 +29,6 @@
 		justify-content: center;
 		font-size: 38px;
 		height: calc(100vh - 25vh);
- 
 	}
 	/* bar logic */
 	.homepage a {
@@ -105,7 +104,6 @@
 		padding: 6px 22px; /* vertical horizontal*/
 		border-radius: 6px;
 		border: none;      
-		
 	}
 	button:hover{
 		cursor: pointer;
@@ -193,4 +191,27 @@
 	}
 	summary:hover{
 		cursor: pointer;
+	}
+	.loading-bar {
+		position: fixed;
+		top: 0;
+		left: 0;
+		height: 2px;
+		background-color: #EF4444;
+		z-index: 200;
+		transition: width 0.1s ease;
+	}
+	.loading-bar.active {
+		animation: crawl 2s ease-out forwards;
+	}
+	.loading-bar.done {
+		animation: finish 0.2s ease forwards;
+	}
+	@keyframes crawl {
+		from { width: 0% }
+		to { width: 80% }
+	}
+	@keyframes finish {
+		from { width: 80% }
+		to { width: 100% }
 	}

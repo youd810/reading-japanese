@@ -1,13 +1,18 @@
 <script>
 	import favicon from '$lib/assets/favicon.svg';
 	import '/src/global.css';
+	import { beforeNavigate, afterNavigate } from '$app/navigation';
 	import {blur, draw, fade, fly, scale, slide} from 'svelte/transition'
 	import {page} from '$app/state'
 	import { animState } from '$lib/stores/offswitch.svelte';
 	import Switch from 'svelte-toggle-switch';
 
 	let { children } = $props();
-	let off = $derived(animState.off)	
+	let off = $derived(animState.off)
+	let status = $state("")	
+	
+	beforeNavigate(() => status = "active")
+	afterNavigate(() => {status = "done", console.log(status)})
 </script>
 
 <svelte:head>
@@ -38,6 +43,9 @@
     }
 </style>
 
+{#if status}
+<div class="loading-bar {status}" onanimationend={()=> {if (status === "done") status = ""}}></div>
+{/if}
 
 {#if page.url.pathname !== "/"}
 	<div class="nav">

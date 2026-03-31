@@ -5,6 +5,7 @@ from database import init_db, get_db
 import spacy
 import json
 import jaconv
+from datetime import datetime
 
 app = FastAPI()
 app.add_middleware(
@@ -84,6 +85,7 @@ def deinflect_word(source):
 
 @app.get("/api/lookup")
 def lookup(word: str, lang: str = "en") -> list: # TODO: FIX QUERY PERFOMANCE ISSUE CLEAN UP THE TIMESTAMPS AFTER
+    print(f"api: {datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")}")
     tables = {"en": "endict", "jp": "jpdict"}
     if lang not in tables: # this should prevent sql injections (hopefully)
         return ["ないです"] 
@@ -106,6 +108,7 @@ def lookup(word: str, lang: str = "en") -> list: # TODO: FIX QUERY PERFOMANCE IS
                         "word" : d["word"],
                         "rules" : d["rules"] 
                     })
+    print(f"post deincflect: {datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")}")
     candidates = [d["word"] for d in deinflects]
     candidates = list(dict.fromkeys(candidates)) # deduplicates candidates to improve query time
     placeholders = ','.join("?" * len(candidates))
@@ -132,6 +135,7 @@ def lookup(word: str, lang: str = "en") -> list: # TODO: FIX QUERY PERFOMANCE IS
     # the logic itself is similar to WHERE with the matching stuff
     result = cursor.fetchall()
     results = []
+    print(f"post query: {datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")}")
     for r in result:
         # this prevents noises to get appended 例: filtering out 乞い from word param こさ (cont)
         is_direct = (word.startswith(r["word"]) or word.startswith(r["reading"]) or conv.startswith(r["reading"]))
@@ -163,6 +167,7 @@ def lookup(word: str, lang: str = "en") -> list: # TODO: FIX QUERY PERFOMANCE IS
             "definition": json.loads(r["definition"]),
             "len": length
         })   
+    print(f"post sort and filter: {datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")}")
     print(candidates)
     print(len(candidates))     
     conn.close()
