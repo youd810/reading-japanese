@@ -10,7 +10,7 @@
     
     async function getMoji(ji) {
         try{
-        let response = await fetch(`http://localhost:8008/api/quiz?ji=${ji}`);
+        let response = await fetch(`https://youd810-reading-japanese.hf.space/api/quiz?ji=${ji}`);
         if (!response.ok) {
             throw new Error(`HTTP Error: ${response.status}`);
         }

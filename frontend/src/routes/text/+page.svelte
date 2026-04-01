@@ -10,7 +10,7 @@
         clearTimeout(timer)         // repeat until the timer runs out > once the timer runs out, run the request.
         timer = setTimeout(async () => {    // moved async to here
             try {
-            let response = await fetch("http://localhost:8008/api/text", {
+            let response = await fetch("https://youd810-reading-japanese.hf.space/api/text", {
                 method : "POST", 
                 headers : {
                     "Content-Type" : "application/json"
@@ -64,7 +64,7 @@
     async function getDict(chars, lang, i) { 
         try{
             status = "active"
-            let response = await fetch(`http://localhost:8008/api/lookup?word=${chars}&lang=${lang}`);
+            let response = await fetch(`https://youd810-reading-japanese.hf.space/api/lookup?word=${chars}&lang=${lang}`);
             if (!response.ok) {
                 throw new Error(`HTTP Error: ${response.status}`);
             }

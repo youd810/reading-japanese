@@ -6,3 +6,4 @@ jpdict/
 *.db
 *.csv
 storage.py
+Dockerfile

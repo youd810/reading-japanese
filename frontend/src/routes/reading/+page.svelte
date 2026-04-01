@@ -45,7 +45,7 @@
     // text logic
     async function getText(field, diff) {
         try{
-            let response = await fetch(`http://localhost:8008/api/reading?field=${field}&diff=${diff}`);
+            let response = await fetch(`https://youd810-reading-japanese.hf.space/api/reading?field=${field}&diff=${diff}`);
             if (!response.ok) {
                 throw new Error(`HTTP Error: ${response.status}`);
             }

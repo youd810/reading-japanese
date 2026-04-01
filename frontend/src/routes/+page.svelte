@@ -16,7 +16,7 @@
 
     async function getChars() {
         try{
-        let response = await fetch(`http://localhost:8008/api/home`);
+        let response = await fetch(`https://youd810-reading-japanese.hf.space/api/home`);
         if (!response.ok) {
             throw new Error(`HTTP Error: ${response.status}`);
         }
