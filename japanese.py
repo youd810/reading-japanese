@@ -106,13 +106,19 @@ def lookup(word: str, lang: str = "en") -> list: # TODO: FIX QUERY PERFOMANCE IS
     candidates = [d["word"] for d in deinflects]
     candidates = list(dict.fromkeys(candidates)) # deduplicates candidates to improve query time
     placeholders = ','.join(["%s"] * len(candidates)) # list to prevent "%" and "s" from concacenating
+    if not candidates:
+        placeholders_clause = "FALSE" # fallback because empty placeholders return an error 
+    else:
+        placeholders = ','.join(["%s"] * len(candidates))
+        placeholders_clause = f"word IN ({placeholders}) OR reading IN ({placeholders})"
     # so the way the query below works is that it will get all words from the db one by one 
     # and check if the pattern word+%% match `?`
     # for example does the pattern 民主%% match 民主主義？ (or vice versa) 
     # the parentheses at the start are important to wrap the results of the two selects into one, otherwise it will return an error 
+    # TODO: EMPTY PLACEHOLDERS AND psycopg2.OperationalError: could not translate host name...
     cursor.execute(f"""
         SELECT * FROM (
-            SELECT *, %s as input FROM {table} WHERE word IN ({placeholders}) OR reading IN ({placeholders})
+            SELECT *, %s as input FROM {table} WHERE {placeholders_clause}
             UNION ALL
             SELECT *, %s as input FROM {table}
             WHERE (%s LIKE word || '%%') OR (%s LIKE reading || '%%' AND LENGTH(reading) >= 1)

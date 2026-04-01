@@ -26,9 +26,11 @@
 <a href="https://web-japan.org/kidsweb/ja/cool/25/202508_coding_ja.html">コードを解き明かせ！日本で広がる楽しいプログラミング学習 (technology easy)</a> 
 <a href="https://ja.wikipedia.org/wiki/%E6%88%A6%E8%89%A6 ">戦艦 (technology medium)</a>
 <a href="https://www.j-platpat.inpit.go.jp/c1801/PU/JP-2000-330832/11/ja">パーティションデータの変換システム、変換方法および記録媒体 (technology hard)</a>
-</div>
+
 
 <h1>その他</h1>
+<a href="https://github.com/youd810/reading-japanese">Github</a>
+</div>
 <details ontoggle={handleToggle}>
 <summary>An Actually Good Advice for Beginners</summary>
     <iframe title="test" width="720" height="405" src={src}>

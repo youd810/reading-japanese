@@ -64,7 +64,7 @@
             {#if ji}
                 <p style="font-size: 60px;">{randomEntry[0]}</p>
                 {#if ji === "y"}
-                    <div style="position: relative; display: inline-block;"> <!-- ignores [?] from a centering calculation -->
+                    <div style="position: relative; display: inline-block;"> <!-- ignores [?] from the centering calculation -->
                         <!-- this gets the value directly from the DOM event instead of relying on bind:value, so input reads the converted wanakana output -->
                         <input bind:this={inputEle} bind:value={answer} oninput={(e) => {answer = e.target.value; check()}}>
                         <span class="question" title="Input: romaji (Kunrei-shiki/Hepburn) to hiragana (automatic)">&nbsp;[?]</span>
